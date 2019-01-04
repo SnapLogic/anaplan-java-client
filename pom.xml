@@ -39,7 +39,7 @@
         <mysql.connector.version>5.1.6</mysql.connector.version>
         <lombok.version>1.16.18</lombok.version>
         <bouncycastle.version>1.58</bouncycastle.version>
-        <okio.version>1.11.0</okio.version>
+        <okio.version>1.14.0</okio.version>
     </properties>
 
     <dependencies>
@@ -152,6 +152,7 @@
         <dependency>
             <groupId>com.squareup.okio</groupId>
             <artifactId>okio</artifactId>
+            <scope>compile</scope>
             <version>${okio.version}</version>
         </dependency>
     </dependencies>
