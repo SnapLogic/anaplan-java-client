@@ -71,6 +71,17 @@ public class Model extends AnaplanApiClientObject {
     }
 
     /**
+     * Get the active state of the model
+     *
+     * @return The active state of this model
+     *
+     * @since 1.4.4
+     */
+    public String getActiveState() {
+        return data.getActiveState();
+    }
+
+    /**
      * Retrieve the list of available modules.
      *
      * @return A list of the available modules within this model

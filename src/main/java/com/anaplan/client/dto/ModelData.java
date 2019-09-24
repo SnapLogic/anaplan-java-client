@@ -1,5 +1,7 @@
 package com.anaplan.client.dto;
 
+import java.util.Objects;
+
 /**
  * Created by Spondon Saha
  * User: spondonsaha
@@ -9,6 +11,7 @@ package com.anaplan.client.dto;
 public class ModelData {
     private String id;
     private String name;
+    private String activeState;
 
     public String getId() {
         return id;
@@ -16,6 +19,17 @@ public class ModelData {
 
     public String getName() {
         return name;
+    }
+
+    /**
+     * Get the active state
+     *
+     * @return The active state
+     *
+     * @since 1.4.4
+     */
+    public String getActiveState() {
+        return activeState;
     }
 
     public void setId(String id) {
@@ -26,15 +40,27 @@ public class ModelData {
         this.name = name;
     }
 
+    /**
+     * Set the active state
+     *
+     * @param activeState The active state
+     *
+     * @since 1.4.4
+     */
+    public void setActiveState(String activeState) {
+        this.activeState = activeState;
+    }
+
     public boolean equals(Object other) {
         if (!(other != null && other instanceof ModelData)) {
             return false;
         }
         ModelData data = (ModelData) other;
-        return id.equals(data.id) && name.equals(data.name);
+        return id.equals(data.id) && name.equals(data.name) && activeState.equals(data.activeState);
     }
 
+    @Override
     public int hashCode() {
-        return id.hashCode() * 31 + name.hashCode();
+        return Objects.hash(id, name, activeState);
     }
 }
