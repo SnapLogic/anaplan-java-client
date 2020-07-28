@@ -2,8 +2,7 @@ package com.anaplan.client.transport.interceptors;
 
 import com.anaplan.client.ex.BadFileChunkCompressionError;
 import com.google.common.net.MediaType;
-import feign.RequestInterceptor;
-import feign.RequestTemplate;
+
 import org.apache.http.HttpHeaders;
 
 import java.io.ByteArrayOutputStream;
@@ -12,6 +11,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
+import feign.RequestInterceptor;
+import feign.RequestTemplate;
 
 /**
  * Compresses the file-chunk PUT request if using X-Gzip compression, otherwise passes on the raw value.
@@ -40,11 +42,11 @@ public class CompressPutBodyInjector implements RequestInterceptor {
                 gzos.write(source, 0, source.length);
                 gzos.close();
                 return sink.toByteArray();
-            }catch (IOException e) {
+            } catch (IOException e) {
                 throw new BadFileChunkCompressionError(e);
             }
-        }else {
-                return source;
-            }
+        } else {
+            return source;
         }
+    }
 }

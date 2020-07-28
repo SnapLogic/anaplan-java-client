@@ -18,9 +18,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import feign.Client;
-import feign.Feign;
-import feign.okhttp.OkHttpClient;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +26,10 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+
+import feign.Client;
+import feign.Feign;
+import feign.okhttp.OkHttpClient;
 
 /**
  * Manages the Anaplan API connection with the help of Feign and Jackson encoder/decoders. Raw
@@ -57,6 +59,7 @@ public class AnaplanApiProvider implements TransportApi {
     /**
      * Customizes the object-mapper to use a custom file-chunk-serializer. Also sets the visibility
      * for parsing to field-names only, so getter and setter names are ignored.
+     *
      * @return
      */
     public ObjectMapper getObjectMapper() {
@@ -65,39 +68,40 @@ public class AnaplanApiProvider implements TransportApi {
             SimpleModule byteSerializerMod = new SimpleModule();
             byteSerializerMod.addSerializer(new ByteArraySerializer(byte[].class));
             objectMapper.registerModule(byteSerializerMod)
-                    .setVisibility(objectMapper.getSerializationConfig().getDefaultVisibilityChecker()
+                .setVisibility(objectMapper.getSerializationConfig().getDefaultVisibilityChecker()
                     .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
                     .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
                     .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
                     .withCreatorVisibility(JsonAutoDetect.Visibility.NONE))
-                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         }
         return objectMapper;
     }
 
     /**
      * Generates the Feign client for communicating with Anaplan APIs
+     *
      * @return
      */
     @Override
     public AnaplanAPI getApiClient() {
         if (apiClient == null) {
             apiClient = Feign.builder()
-                    .client(createFeignClient())
-                    .encoder(new AnaplanApiEncoder(getObjectMapper()))
-                    .decoder(new AnaplanApiDecoder(getObjectMapper()))
-                    .requestInterceptors(Arrays.asList(
-                            new AuthTokenInjector(authenticator),
-                            new UserAgentInjector(),
-                            new AConnectHeaderInjector(),
-                            new CompressPutBodyInjector()))
-                    .retryer(new FeignApiRetryer(
-                            (long) (properties.getRetryTimeout() * 1000),
-                            (long) Constants.MAX_RETRY_TIMEOUT_SECS * 1000,
-                            properties.getMaxRetryCount(),
-                            FeignApiRetryer.DEFAULT_BACKOFF_MULTIPLIER))
-                    .errorDecoder(new AnaplanErrorDecoder())
-                    .target(AnaplanAPI.class, properties.getApiServicesUri().toString() + "/" + Version.API_MAJOR + "/" + Version.API_MINOR);
+                .client(createFeignClient())
+                .encoder(new AnaplanApiEncoder(getObjectMapper()))
+                .decoder(new AnaplanApiDecoder(getObjectMapper()))
+                .requestInterceptors(Arrays.asList(
+                    new AuthTokenInjector(authenticator),
+                    new UserAgentInjector(),
+                    new AConnectHeaderInjector(),
+                    new CompressPutBodyInjector()))
+                .retryer(new FeignApiRetryer(
+                    (long) (properties.getRetryTimeout() * 1000),
+                    (long) Constants.MAX_RETRY_TIMEOUT_SECS * 1000,
+                    properties.getMaxRetryCount(),
+                    FeignApiRetryer.DEFAULT_BACKOFF_MULTIPLIER))
+                .errorDecoder(new AnaplanErrorDecoder())
+                .target(AnaplanAPI.class, properties.getApiServicesUri().toString() + "/" + Version.API_MAJOR + "/" + Version.API_MINOR);
         }
         return apiClient;
     }
@@ -121,8 +125,8 @@ public class AnaplanApiProvider implements TransportApi {
         }
         // setting the read and write timeouts as well
         okHttpBuilder.connectTimeout(properties.getHttpTimeout(), TimeUnit.SECONDS)
-        .readTimeout(properties.getHttpTimeout(),TimeUnit.SECONDS)
-        .writeTimeout(properties.getHttpTimeout(),TimeUnit.SECONDS);
+            .readTimeout(properties.getHttpTimeout(), TimeUnit.SECONDS)
+            .writeTimeout(properties.getHttpTimeout(), TimeUnit.SECONDS);
         return new OkHttpClient(okHttpBuilder.build());
     }
 
@@ -135,25 +139,25 @@ public class AnaplanApiProvider implements TransportApi {
         Credentials proxyCredentials = properties.getProxyCredentials();
 
         okHttpBuilder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(
-                properties.getProxyLocation().getHost(),
-                properties.getProxyLocation().getPort())));
+            properties.getProxyLocation().getHost(),
+            properties.getProxyLocation().getPort())));
 
         if (proxyCredentials != null) {
             if (proxyCredentials.isNtlm()) {
                 okHttpBuilder
-                        .proxyAuthenticator(new NtlmAuthenticator(
-                                proxyCredentials.getUserName(),
-                                proxyCredentials.getPassPhrase(),
-                                proxyCredentials.getDomain(),
-                                proxyCredentials.getWorkstation()));
+                    .proxyAuthenticator(new NtlmAuthenticator(
+                        proxyCredentials.getUserName(),
+                        proxyCredentials.getPassPhrase(),
+                        proxyCredentials.getDomain(),
+                        proxyCredentials.getWorkstation()));
             } else {
                 okHttpBuilder
-                        .proxyAuthenticator((route, response) -> response.request().newBuilder()
-                                .header("Connection","close")
-                                .header(PROXY_AUTHORIZATION_HEADER, okhttp3.Credentials.basic(
-                                        proxyCredentials.getUserName(),
-                                        proxyCredentials.getPassPhrase()))
-                                .build());
+                    .proxyAuthenticator((route, response) -> response.request().newBuilder()
+                        .header("Connection", "close")
+                        .header(PROXY_AUTHORIZATION_HEADER, okhttp3.Credentials.basic(
+                            proxyCredentials.getUserName(),
+                            proxyCredentials.getPassPhrase()))
+                        .build());
             }
         }
     }

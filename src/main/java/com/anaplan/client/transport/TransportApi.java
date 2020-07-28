@@ -1,6 +1,5 @@
 package com.anaplan.client.transport;
 
-import com.anaplan.client.auth.Credentials;
 import com.anaplan.client.api.AnaplanAPI;
 
 /**

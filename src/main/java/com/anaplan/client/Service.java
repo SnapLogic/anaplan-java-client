@@ -14,30 +14,28 @@
 
 package com.anaplan.client;
 
+import com.anaplan.client.api.AnaplanAPI;
 import com.anaplan.client.auth.Authenticator;
 import com.anaplan.client.auth.AuthenticatorFactory;
 import com.anaplan.client.dto.WorkspaceData;
 import com.anaplan.client.dto.responses.UserResponse;
-import com.anaplan.client.dto.responses.WorkspaceResponse;
-import com.anaplan.client.dto.responses.WorkspacesResponse;
 import com.anaplan.client.ex.AnaplanAPIException;
 import com.anaplan.client.ex.UserNotFoundException;
-import com.anaplan.client.ex.WorkspaceNotFoundException;
 import com.anaplan.client.transport.AnaplanApiProvider;
 import com.anaplan.client.transport.ConnectionProperties;
-import com.anaplan.client.transport.Paginator;
 import com.google.common.base.Preconditions;
-import feign.FeignException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.WeakHashMap;
+
+import feign.FeignException;
 
 
 /**
@@ -48,7 +46,6 @@ public class Service implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(Service.class);
     private static final URI PRODUCTION_API_ROOT;
     private static final URI PRODUCTION_AUTH_API_ROOT;
-    private String userId;
 
     static {
         try {
@@ -59,9 +56,25 @@ public class Service implements Closeable {
         }
     }
 
+    private String userId;
     private ConnectionProperties props;
     private AnaplanApiProvider apiProvider;
     private Authenticator authProvider;
+    // Cached Workspace instances
+    private Map<WorkspaceData, Reference<Workspace>> workspaceCache = new WeakHashMap<>();
+
+    public Service(ConnectionProperties properties) {
+        if (properties.getApiServicesUri() == null) {
+            properties.setApiServicesUri(PRODUCTION_API_ROOT);
+        }
+        if (properties.getAuthServiceUri() == null) {
+            properties.setAuthServiceUri(PRODUCTION_AUTH_API_ROOT);
+        }
+        LOG.info("Initializing Service...");
+        this.props = properties;
+        this.authProvider = AuthenticatorFactory.getAuthenticator(properties);
+        this.apiProvider = new AnaplanApiProvider(properties, authProvider);
+    }
 
     public AnaplanApiProvider getApiProvider() {
         return apiProvider;
@@ -79,22 +92,6 @@ public class Service implements Closeable {
         this.authProvider = authProvider;
     }
 
-    // Cached Workspace instances
-    private Map<WorkspaceData, Reference<Workspace>> workspaceCache = new WeakHashMap<>();
-
-    public Service(ConnectionProperties properties) {
-        if (properties.getApiServicesUri() == null) {
-            properties.setApiServicesUri(PRODUCTION_API_ROOT);
-        }
-        if (properties.getAuthServiceUri() == null) {
-            properties.setAuthServiceUri(PRODUCTION_AUTH_API_ROOT);
-        }
-        LOG.info("Initializing Service...");
-        this.props = properties;
-        this.authProvider = AuthenticatorFactory.getAuthenticator(properties);
-        this.apiProvider = new AnaplanApiProvider(properties, authProvider);
-    }
-
     /**
      * Authenticates using provided credentials
      */
@@ -106,49 +103,15 @@ public class Service implements Closeable {
     public String getUserId() {
         if (userId == null) {
             try {
-                UserResponse userResponse = apiProvider.getApiClient().getUser();
+                AnaplanAPI apiClient = apiProvider.getApiClient();
+                UserResponse user = apiClient.getUser();
+                UserResponse userResponse = user;
                 userId = userResponse.getItem().getId();
             } catch (FeignException | AnaplanAPIException e) {
                 throw new UserNotFoundException(e);
             }
         }
         return userId;
-    }
-
-    /**
-     * Retrieves the list of available workspaces.
-     *
-     * @return The list of workspaces this user has access to
-     * @throws AnaplanAPIException an error occurred.
-     */
-
-    public Iterable<Workspace> getWorkspaces() throws AnaplanAPIException {
-        Service self = this;
-        return new Paginator<Workspace>() {
-
-            @Override
-            public Workspace[] getPage(int offset) {
-                WorkspacesResponse response = apiProvider.getApiClient().getWorkspaces(
-                        getUserId(), offset);
-                setPageInfo(response.getMeta().getPaging());
-                if (getPageInfo().getCurrentPageSize() > 0 && response.getItem() != null) {
-                    return response.getItem()
-                            .stream()
-                            .map(workspaceData -> {
-                                Reference<Workspace> workspaceReference = workspaceCache.get(workspaceData);
-                                Workspace workspace = workspaceReference == null ? null : workspaceReference.get();
-                                if (workspace == null) {
-                                    workspace = new Workspace(self, workspaceData);
-                                    workspaceCache.put(workspaceData, new WeakReference<>(workspace));
-                                }
-                                return workspace;
-                            })
-                            .toArray(Workspace[]::new);
-                } else {
-                    return new Workspace[]{};
-                }
-            }
-        };
     }
 
     /**
@@ -161,16 +124,7 @@ public class Service implements Closeable {
      */
 
     public Workspace getWorkspace(String workspaceId) {
-        try {
-            WorkspaceResponse response = apiProvider.getApiClient().getWorkspace(getUserId(), workspaceId);
-            if (response != null && response.getItem() != null) {
-                return new Workspace(this, response.getItem());
-            } else {
-                throw new WorkspaceNotFoundException(workspaceId);
-            }
-        } catch (FeignException e) {
-            throw new WorkspaceNotFoundException(workspaceId, e);
-        }
+        return new Workspace(this, new WorkspaceData(workspaceId));
     }
 
     /**
@@ -183,6 +137,4 @@ public class Service implements Closeable {
             authProvider = null;
         }
     }
-
-
 }

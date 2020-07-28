@@ -19,28 +19,28 @@ public class TaskResultDetailData {
         return type;
     }
 
-    public List<String> getValues() {
-        return values;
-    }
-
-    public String getLocalMessageText() {
-        return localMessageText;
-    }
-
-    public int getOccurrences() {
-        return occurrences;
-    }
-
     public void setType(String type) {
         this.type = type;
+    }
+
+    public List<String> getValues() {
+        return values;
     }
 
     public void setValues(List<String> values) {
         this.values = values;
     }
 
+    public String getLocalMessageText() {
+        return localMessageText;
+    }
+
     public void setLocalMessageText(String localMessageText) {
         this.localMessageText = localMessageText;
+    }
+
+    public int getOccurrences() {
+        return occurrences;
     }
 
     public void setOccurrences(int occurrences) {

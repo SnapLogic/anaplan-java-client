@@ -21,44 +21,44 @@ public class TaskResultData {
         return objectId;
     }
 
-    public String getObjectName() {
-        return objectName;
-    }
-
-    public boolean isSuccessful() {
-        return successful;
-    }
-
-    public List<TaskResultDetailData> getDetails() {
-        return details;
-    }
-
-    public boolean isFailureDumpAvailable() {
-        return failureDumpAvailable;
-    }
-
-    public List<TaskResultData> getNestedResults() {
-        return nestedResults;
-    }
-
     public void setObjectId(String objectId) {
         this.objectId = objectId;
+    }
+
+    public String getObjectName() {
+        return objectName;
     }
 
     public void setObjectName(String objectName) {
         this.objectName = objectName;
     }
 
+    public boolean isSuccessful() {
+        return successful;
+    }
+
     public void setSuccessful(boolean successful) {
         this.successful = successful;
+    }
+
+    public List<TaskResultDetailData> getDetails() {
+        return details;
     }
 
     public void setDetails(List<TaskResultDetailData> details) {
         this.details = details;
     }
 
+    public boolean isFailureDumpAvailable() {
+        return failureDumpAvailable;
+    }
+
     public void setFailureDumpAvailable(boolean failureDumpAvailable) {
         this.failureDumpAvailable = failureDumpAvailable;
+    }
+
+    public List<TaskResultData> getNestedResults() {
+        return nestedResults;
     }
 
     public void setNestedResults(List<TaskResultData> nestedResults) {

@@ -31,50 +31,6 @@ public class TaskParameters {
     TaskParametersData data = new TaskParametersData();
 
     /**
-     * Enumerate the known types of data source
-     *
-     * @since 1.3
-     */
-    public static enum SourceType {
-        /**
-         * A file uploaded, initially through the browser, to the server.
-         */
-        UPLOADED_FILE,
-        /**
-         * A view in another model in the same workspace.
-         */
-        MODEL_OBJECT,
-        /**
-         * A SOQL query to be run on a Salesforce.com instance.
-         */
-        SALESFORCE_API;
-    }
-
-    /**
-     * Enumerate the known parameters that can be set for a data source
-     *
-     * @since 1.3
-     */
-    public static enum ConnectorParameter {
-        /**
-         * Instance of third-party system to connect to.
-         */
-        INSTANCE,
-        /**
-         * User ID to connect to third-party system with.
-         */
-        USERID,
-        /**
-         * Password to connect to third-party system with.
-         */
-        PASSWORD,
-        /**
-         * Additional security token for third-party system.
-         */
-        SECURITY_TOKEN;
-    }
-
-    /**
      * Default constructor.
      * The locale is initially set to the default locale
      * (java.util.Locale.getDefault()).
@@ -206,6 +162,50 @@ public class TaskParameters {
         mappingParameterData.setEntityType(entityType);
         mappingParameterData.setEntityName(entityName);
         data.getMappingParameters().add(mappingParameterData);
+    }
+
+    /**
+     * Enumerate the known types of data source
+     *
+     * @since 1.3
+     */
+    public static enum SourceType {
+        /**
+         * A file uploaded, initially through the browser, to the server.
+         */
+        UPLOADED_FILE,
+        /**
+         * A view in another model in the same workspace.
+         */
+        MODEL_OBJECT,
+        /**
+         * A SOQL query to be run on a Salesforce.com instance.
+         */
+        SALESFORCE_API;
+    }
+
+    /**
+     * Enumerate the known parameters that can be set for a data source
+     *
+     * @since 1.3
+     */
+    public static enum ConnectorParameter {
+        /**
+         * Instance of third-party system to connect to.
+         */
+        INSTANCE,
+        /**
+         * User ID to connect to third-party system with.
+         */
+        USERID,
+        /**
+         * Password to connect to third-party system with.
+         */
+        PASSWORD,
+        /**
+         * Additional security token for third-party system.
+         */
+        SECURITY_TOKEN;
     }
 }
 

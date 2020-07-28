@@ -31,7 +31,7 @@ public class KeyStoreManager {
      * @throws KeyStoreException
      */
     public KeyStore getKeystore(String keyStorePath, String keyStorePassword)
-            throws KeyStoreException {
+        throws KeyStoreException {
 
         Preconditions.checkNotNull(keyStorePath, "Keystore path cannot be null!");
         Preconditions.checkNotNull(keyStorePassword, "Keystore password cannot be null!");
@@ -50,7 +50,7 @@ public class KeyStoreManager {
             }
         } else {
             throw new IllegalArgumentException("The specified key store path '" + keyStorePath
-                    + "' is invalid");
+                + "' is invalid");
         }
     }
 
@@ -101,15 +101,15 @@ public class KeyStoreManager {
 
         try {
             KeyStore.PasswordProtection password = new KeyStore.PasswordProtection(
-                    keyStorePassword.toCharArray());
+                keyStorePassword.toCharArray());
             KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(
-                    keyStoreAlias, password);
+                keyStoreAlias, password);
 
             if (privateKeyEntry != null) {
                 return (RSAPrivateKey) privateKeyEntry.getPrivateKey();
             } else {
                 throw new AnaplanAPIException("Invalid alias provided to read Private-Key: "
-                        + keyStoreAlias);
+                    + keyStoreAlias);
             }
         } catch (NoSuchAlgorithmException | UnrecoverableEntryException e) {
             throw new AnaplanAPIException("Invalid Private key alias provided!", e);

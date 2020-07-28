@@ -6,14 +6,16 @@ import com.anaplan.client.dto.responses.RefreshTokenResp;
 import com.anaplan.client.ex.AnaplanAPIException;
 import com.anaplan.client.transport.AnaplanApiProvider;
 import com.anaplan.client.transport.ConnectionProperties;
-import com.anaplan.client.transport.retryer.FeignApiRetryer;
 import com.anaplan.client.transport.interceptors.AConnectHeaderInjector;
+import com.anaplan.client.transport.retryer.FeignApiRetryer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import feign.Feign;
 import feign.FeignException;
 import feign.jackson.JacksonDecoder;
 import feign.jackson.JacksonEncoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Created by Spondon Saha
@@ -25,7 +27,7 @@ public abstract class AbstractAuthenticator extends AnaplanApiProvider implement
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractAuthenticator.class.getName());
     private static final int TOKEN_EXPIRATION_REFRESH_WINDOW = 5 * 60 * 1000;
-    private static final int TOKEN_EXPIRED_WINDOW =  60 * 1000;
+    private static final int TOKEN_EXPIRED_WINDOW = 60 * 1000;
     private AnaplanAuthenticationAPI authClient;
     private byte[] authToken;
     private Long authTokenExpiresAt;
@@ -53,20 +55,24 @@ public abstract class AbstractAuthenticator extends AnaplanApiProvider implement
         return new String(authToken);
     }
 
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken.getBytes();
+    }
+
     @Override
     public AnaplanAuthenticationAPI getAuthClient() {
         if (authClient == null) {
             authClient = Feign.builder()
-                    .client(createFeignClient())
-                    .encoder(new JacksonEncoder())
-                    .decoder(new JacksonDecoder())
-                    .requestInterceptor(new AConnectHeaderInjector())
-                    .retryer(new FeignApiRetryer(
-                            (long) (properties.getRetryTimeout() * 1000),
-                            (long) Constants.MAX_RETRY_TIMEOUT_SECS * 1000,
-                            properties.getMaxRetryCount(),
-                            FeignApiRetryer.DEFAULT_BACKOFF_MULTIPLIER))
-                    .target(AnaplanAuthenticationAPI.class, properties.getAuthServiceUri().toString());
+                .client(createFeignClient())
+                .encoder(new JacksonEncoder())
+                .decoder(new JacksonDecoder())
+                .requestInterceptor(new AConnectHeaderInjector())
+                .retryer(new FeignApiRetryer(
+                    (long) (properties.getRetryTimeout() * 1000),
+                    (long) Constants.MAX_RETRY_TIMEOUT_SECS * 1000,
+                    properties.getMaxRetryCount(),
+                    FeignApiRetryer.DEFAULT_BACKOFF_MULTIPLIER))
+                .target(AnaplanAuthenticationAPI.class, properties.getAuthServiceUri().toString());
         }
         return authClient;
     }
@@ -76,16 +82,12 @@ public abstract class AbstractAuthenticator extends AnaplanApiProvider implement
         this.authClient = authClient;
     }
 
-    public void setAuthTokenExpiresAt(Long authTokenExpiresAt) {
-        this.authTokenExpiresAt = authTokenExpiresAt;
-    }
-
     public Long getAuthTokenExpiresAt() {
         return authTokenExpiresAt;
     }
 
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken.getBytes();
+    public void setAuthTokenExpiresAt(Long authTokenExpiresAt) {
+        this.authTokenExpiresAt = authTokenExpiresAt;
     }
 
     private byte[] refreshToken() {

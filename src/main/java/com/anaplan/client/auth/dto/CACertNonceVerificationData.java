@@ -17,8 +17,8 @@ import java.util.Base64;
  * Java representation of the JSON payload sent during cert auth. Payload structure is of this format:
  * <p>
  * {
- *    "encodedData":"base-64 encoded nonce string here",
- *    "encodedSignedData":"base-64 encoded signed nonce string here"
+ * "encodedData":"base-64 encoded nonce string here",
+ * "encodedSignedData":"base-64 encoded signed nonce string here"
  * }
  * <p>
  * The supported algorithm for signing is specified in auth.properties file.
@@ -38,7 +38,7 @@ public class CACertNonceVerificationData implements Serializable {
     }
 
     public CACertNonceVerificationData(byte[] decodedData, PrivateKey privateKey)
-            throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+        throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         byte[] decodedSignedData = sign(privateKey, decodedData);
         encodedData = Base64.getEncoder().encodeToString(decodedData);
         encodedSignedData = Base64.getEncoder().encodeToString(decodedSignedData);
@@ -59,7 +59,7 @@ public class CACertNonceVerificationData implements Serializable {
     }
 
     private byte[] sign(PrivateKey privateKey, byte[] dataBytes)
-            throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+        throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         Signature sig = Signature.getInstance(NONCE_SIGNATURE_ALGORITHM);
 
         sig.initSign(privateKey);

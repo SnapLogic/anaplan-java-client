@@ -27,6 +27,112 @@ import com.anaplan.client.ex.AnaplanAPIException;
  */
 public class Import extends TaskFactory {
 
+    Import(Model model, ImportData data) {
+        super(model, data);
+    }
+
+    @Override
+    TaskResponse createActionTask(TaskParametersData taskParametersData) {
+        return getApi().createImportTask(
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            getData().merge(taskParametersData, ImportData.class));
+    }
+
+    @Override
+    TasksResponse getTasks(int offset) {
+        return getApi().getImportTasks(
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            offset);
+    }
+
+    @Override
+    TaskStatusResponse cancelTask(String taskId) {
+        return getApi().cancelImportTask(
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId);
+    }
+
+    @Override
+    TaskStatusResponse getTaskStatus(String taskId) {
+        return getApi().getImportTaskStatus(
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId);
+    }
+
+    @Override
+    ChunksResponse getDumpFileChunks(String taskId) {
+        return getApi().getImportDumpFileChunks(
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId);
+    }
+
+    @Override
+    byte[] getDumpFileChunkContent(String taskId, String chunkId) {
+        return getApi().getImportDumpFileChunkContent(
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId,
+            chunkId);
+    }
+
+    @Override
+    ChunksResponse getNestedDumpFileChunks(String taskId, String nestedObjectId) {
+        return getApi().getImportNestedDumpFileChunks(
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId,
+            nestedObjectId);
+    }
+
+    @Override
+    byte[] getNestedDumpFileChunkContent(String taskId, String nestedObjectId, String chunkId) {
+        return getApi().getImportNestedDumpFileChunkContent(
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId,
+            nestedObjectId,
+            chunkId);
+    }
+
+    /**
+     * Get the ID of the data source associated with the import, if it is an uploaded file.
+     *
+     * @return the ID for the data source if it is a file; otherwise the empty
+     * string ("") is returned.
+     * @since 1.2
+     */
+    public String getSourceFileId() throws AnaplanAPIException {
+        return ((ImportData) getData()).getImportDataSourceId();
+    }
+
+    /**
+     * Get the type of import.
+     *
+     * @return The import type; null if the type is not recognized by this
+     * version of Anaplan Connect.
+     * @since 1.3
+     */
+    public ImportType getImportType() {
+        try {
+            return ImportType.valueOf(((ImportData) getData()).getImportType());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     /**
      * The set of types of import definition.
      * This enumerates possible import types available at the release of this
@@ -64,112 +170,6 @@ public class Import extends TaskFactory {
         @Override
         public String toString() {
             return description;
-        }
-    }
-
-    Import(Model model, ImportData data) {
-        super(model, data);
-    }
-
-    @Override
-    TaskResponse createActionTask(TaskParametersData taskParametersData) {
-        return getApi().createImportTask(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                getData().merge(taskParametersData, ImportData.class));
-    }
-
-    @Override
-    TasksResponse getTasks(int offset) {
-        return getApi().getImportTasks(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                offset);
-    }
-
-    @Override
-    TaskStatusResponse cancelTask(String taskId) {
-        return getApi().cancelImportTask(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId);
-    }
-
-    @Override
-    TaskStatusResponse getTaskStatus(String taskId) {
-        return getApi().getImportTaskStatus(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId);
-    }
-
-    @Override
-    ChunksResponse getDumpFileChunks(String taskId) {
-        return getApi().getImportDumpFileChunks(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId);
-    }
-
-    @Override
-    byte[] getDumpFileChunkContent(String taskId, String chunkId) {
-        return getApi().getImportDumpFileChunkContent(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId,
-                chunkId);
-    }
-
-    @Override
-    ChunksResponse getNestedDumpFileChunks(String taskId, String nestedObjectId) {
-        return getApi().getImportNestedDumpFileChunks(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId,
-                nestedObjectId);
-    }
-
-    @Override
-    byte[] getNestedDumpFileChunkContent(String taskId, String nestedObjectId, String chunkId) {
-        return getApi().getImportNestedDumpFileChunkContent(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId,
-                nestedObjectId,
-                chunkId);
-    }
-
-    /**
-     * Get the ID of the data source associated with the import, if it is an uploaded file.
-     *
-     * @return the ID for the data source if it is a file; otherwise the empty
-     * string ("") is returned.
-     * @since 1.2
-     */
-    public String getSourceFileId() throws AnaplanAPIException {
-        return ((ImportData) getData()).getImportDataSourceId();
-    }
-
-    /**
-     * Get the type of import.
-     *
-     * @return The import type; null if the type is not recognized by this
-     * version of Anaplan Connect.
-     * @since 1.3
-     */
-    public ImportType getImportType() {
-        try {
-            return ImportType.valueOf(((ImportData) getData()).getImportType());
-        } catch (Exception e) {
-            return null;
         }
     }
 }

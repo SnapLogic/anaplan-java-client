@@ -3,12 +3,13 @@ package com.anaplan.client.transport.encoders;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import feign.RequestTemplate;
-import feign.codec.EncodeException;
-import feign.jackson.JacksonEncoder;
 
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+
+import feign.RequestTemplate;
+import feign.codec.EncodeException;
+import feign.jackson.JacksonEncoder;
 
 /**
  * A brute extension of the default JacksonEncoder to use the Server Encoding and remove the enforced UTF-8 encoding

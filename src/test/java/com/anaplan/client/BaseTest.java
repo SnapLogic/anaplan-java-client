@@ -204,7 +204,8 @@ public abstract class BaseTest {
 
     protected Model fetchMockModel() throws IOException, AnaplanAPIException {
         ModelData md = new ModelData();
-        Model model = new Model(getTestWorkspace(), md);
+        Workspace testWorkspace = getTestWorkspace();
+        Model model = new Model(testWorkspace, md);
         return model;
     }
 
@@ -233,7 +234,8 @@ public abstract class BaseTest {
     }
 
     protected Workspace getTestWorkspace() throws AnaplanAPIException {
-        return mockService.getWorkspace(testWorkspace);
+        Workspace workspace = mockService.getWorkspace(testWorkspace);
+        return workspace;
     }
 
     protected InputStream getTestDataStream(String name) throws IOException {

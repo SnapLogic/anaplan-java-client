@@ -24,6 +24,7 @@ import com.anaplan.client.ex.AnaplanAPIException;
 import com.anaplan.client.ex.CreateTaskError;
 import com.anaplan.client.logging.LogUtils;
 import com.anaplan.client.transport.Paginator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,9 +139,9 @@ public abstract class TaskFactory extends NamedObject {
                 setPageInfo(response.getMeta().getPaging());
                 if (getPageInfo().getCurrentPageSize() > 0 && response.getItem() != null) {
                     return response.getItem()
-                            .stream()
-                            .map(taskData -> new Task(self, taskData))
-                            .toArray(Task[]::new);
+                        .stream()
+                        .map(taskData -> new Task(self, taskData))
+                        .toArray(Task[]::new);
                 } else {
                     return new Task[]{};
                 }

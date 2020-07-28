@@ -22,12 +22,13 @@ import com.anaplan.client.ex.AnaplanAPIException;
 import com.anaplan.client.ex.ModelNotFoundException;
 import com.anaplan.client.ex.ModelsNotFoundException;
 import com.anaplan.client.transport.Paginator;
-import feign.FeignException;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.WeakHashMap;
+
+import feign.FeignException;
 
 /**
  * An Anaplan workspace.
@@ -80,17 +81,17 @@ public class Workspace extends AnaplanApiClientObject {
                     setPageInfo(response.getMeta().getPaging());
                     if (getPageInfo().getCurrentPageSize() > 0 && response.getItem() != null) {
                         return response.getItem()
-                                .stream()
-                                .map(modelData -> {
-                                    Reference<Model> modelReference = modelCache.get(modelData);
-                                    Model model = modelReference == null ? null : modelReference.get();
-                                    if (model == null) {
-                                        model = new Model(self, modelData);
-                                        modelCache.put(modelData, new WeakReference<>(model));
-                                    }
-                                    return model;
-                                })
-                                .toArray(Model[]::new);
+                            .stream()
+                            .map(modelData -> {
+                                Reference<Model> modelReference = modelCache.get(modelData);
+                                Model model = modelReference == null ? null : modelReference.get();
+                                if (model == null) {
+                                    model = new Model(self, modelData);
+                                    modelCache.put(modelData, new WeakReference<>(model));
+                                }
+                                return model;
+                            })
+                            .toArray(Model[]::new);
                     } else {
                         return new Model[]{};
                     }

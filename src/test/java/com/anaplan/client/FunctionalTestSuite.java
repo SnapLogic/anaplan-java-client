@@ -27,5 +27,6 @@ import org.junit.runners.Suite;
         ServerFileTest.class,
         WorkspaceTest.class
 })
+
 public class FunctionalTestSuite {
 }

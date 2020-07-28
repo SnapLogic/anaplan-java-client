@@ -16,6 +16,7 @@ package com.anaplan.client;
 
 import com.anaplan.client.dto.TaskResultDetailData;
 import com.anaplan.client.ex.InvalidTaskResultDetail;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,18 +66,18 @@ public class TaskResultDetail {
         }
 
         if (getValues() != null && getValues().size() != 0) {     // jbackes 10/08/2018 - Add null check
-                out.append("\n");
-                getValues().forEach((k, v) -> {
-                    try {
-                        if (("serverAlert".equals(k)) && v == null) {
-                            v = "Completed successfully!";
-                        }
-                        out.append(k).append(" - ").append(v).append("\n");
-                    } catch (IOException e) {
-                        throw new InvalidTaskResultDetail(e);
+            out.append("\n");
+            getValues().forEach((k, v) -> {
+                try {
+                    if (("serverAlert".equals(k)) && v == null) {
+                        v = "Completed successfully!";
                     }
-                });
-            }
+                    out.append(k).append(" - ").append(v).append("\n");
+                } catch (IOException e) {
+                    throw new InvalidTaskResultDetail(e);
+                }
+            });
+        }
         return out;
     }
 

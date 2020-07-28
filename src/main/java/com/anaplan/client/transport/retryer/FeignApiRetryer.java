@@ -1,10 +1,12 @@
 package com.anaplan.client.transport.retryer;
 
 import com.anaplan.client.Constants;
-import feign.RetryableException;
-import feign.Retryer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import feign.RetryableException;
+import feign.Retryer;
 
 /**
  * Feign retryer that emulates Spring's BackoffExponentialPolicy for setting intervals/periods
@@ -12,13 +14,11 @@ import org.slf4j.LoggerFactory;
  */
 public class FeignApiRetryer extends Retryer.Default {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FeignApiRetryer.class);
-
     public static final long DEFAULT_PERIOD = Constants.MIN_RETRY_TIMEOUT_SECS * 1000L;
     public static final long DEFAULT_MAX_PERIOD = Constants.MAX_RETRY_TIMEOUT_SECS * 1000L;
     public static final int DEFAULT_MAX_ATTEMPTS = Constants.MIN_RETRY_COUNT;
     public static final double DEFAULT_BACKOFF_MULTIPLIER = Constants.DEFAULT_BACKOFF_MULTIPLIER;
-
+    private static final Logger LOG = LoggerFactory.getLogger(FeignApiRetryer.class);
     private Long period;
     private Long maxPeriod;
     private Integer maxAttempts;

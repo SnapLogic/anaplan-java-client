@@ -17,6 +17,7 @@ package com.anaplan.client.jdbc;
 import com.anaplan.client.CellReader;
 import com.anaplan.client.ex.AnaplanAPIException;
 import com.anaplan.client.ex.TooLongQueryError;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +57,7 @@ public class JDBCCellReader implements CellReader {
 
     /**
      * Create a new JDBC cell reader by connecting to a database and performing a query.
+     *
      * @param jdbcConfig
      */
     public JDBCCellReader(JDBCConfig jdbcConfig) {
@@ -78,8 +80,8 @@ public class JDBCCellReader implements CellReader {
         }
         try {
             connection = DriverManager.getConnection(jdbcConfig.getJdbcConnectionUrl(),
-                    jdbcConfig.getJdbcUsername(),
-                    jdbcConfig.getJdbcPassword());
+                jdbcConfig.getJdbcUsername(),
+                jdbcConfig.getJdbcPassword());
             connection.setAutoCommit(false);
             autoCommit = false;
             LOG.info("Created JDBC connection to: {}", connection.getMetaData().getURL());
@@ -89,7 +91,7 @@ public class JDBCCellReader implements CellReader {
 
         if (jdbcConfig.isStoredProcedure()) {
             CallableStatement callableStatement = connection.prepareCall(jdbcConfig.getJdbcQuery(),
-                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             if (jdbcConfig.getJdbcParams() != null && jdbcConfig.getJdbcParams().length > 0 && !jdbcConfig.getJdbcParams()[0].equals("")) {
                 for (int i = 0; i < jdbcConfig.getJdbcParams().length; i++) {
                     callableStatement.setString(i + 1, String.valueOf(jdbcConfig.getJdbcParams()[i]));
@@ -101,7 +103,7 @@ public class JDBCCellReader implements CellReader {
             statement = callableStatement;
         } else {
             PreparedStatement preparedStatement = connection.prepareStatement(jdbcConfig.getJdbcQuery(),
-                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             if (jdbcConfig.getJdbcParams() != null && jdbcConfig.getJdbcParams().length > 0 && !jdbcConfig.getJdbcParams()[0].equals("")) {
                 for (int i = 0; i < jdbcConfig.getJdbcParams().length; i++) {
                     preparedStatement.setString(i + 1, String.valueOf(jdbcConfig.getJdbcParams()[i]));

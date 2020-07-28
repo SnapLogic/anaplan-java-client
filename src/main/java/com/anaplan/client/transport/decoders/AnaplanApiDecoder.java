@@ -4,14 +4,15 @@ import com.anaplan.client.transport.serialization.ByteArrayDeserializer;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
-import feign.Response;
-import feign.Util;
-import feign.jackson.JacksonDecoder;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
+
+import feign.Response;
+import feign.Util;
+import feign.jackson.JacksonDecoder;
 
 /**
  * A brute extension of the default JacksonDecoder, except the raw-type is checked here whether

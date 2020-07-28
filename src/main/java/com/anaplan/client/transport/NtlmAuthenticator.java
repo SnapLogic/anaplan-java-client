@@ -1,13 +1,14 @@
 package com.anaplan.client.transport;
 
-import okhttp3.Authenticator;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.Route;
 import org.apache.http.impl.auth.NTLMEngine;
 
 import java.io.IOException;
 import java.util.List;
+
+import okhttp3.Authenticator;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.Route;
 
 /**
  * Yanked from here: https://github.com/square/okhttp/issues/206
@@ -16,12 +17,12 @@ import java.util.List;
  * Time: 11:41 PM
  */
 public class NtlmAuthenticator implements Authenticator {
-    private NTLMEngine engine;
     private final String workstation;
     private final String domain;
     private final String username;
     private final String password;
     private final String ntlmMsg1;
+    private NTLMEngine engine;
 
     public NtlmAuthenticator(String username, String password, String domain, String workstation) {
         this.username = username;

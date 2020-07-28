@@ -17,8 +17,8 @@ public class Utils {
      */
     protected static String formatThrowable(Throwable thrown) {
         StringBuilder message = new StringBuilder(
-                thrown instanceof AnaplanAPIException ? "AnaplanAPI" : thrown
-                        .getClass().getSimpleName());
+            thrown instanceof AnaplanAPIException ? "AnaplanAPI" : thrown
+                .getClass().getSimpleName());
         if (message.length() > 9 && message.toString().endsWith("Exception")) {
             message.delete(message.length() - 9, message.length());
         }
@@ -40,7 +40,7 @@ public class Utils {
         }
         if (null != thrown.getCause()) {
             message.append(" (").append(formatThrowable(thrown.getCause()))
-                    .append(')');
+                .append(')');
         }
         return message.toString();
     }

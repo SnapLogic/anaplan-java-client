@@ -20,6 +20,7 @@ import com.anaplan.client.ex.AnaplanAPIException;
 import com.anaplan.client.ex.InvalidTaskStatusError;
 import com.anaplan.client.logging.LogUtils;
 import com.google.common.base.Throwables;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +35,6 @@ public class Task extends AnaplanApiClientObject {
     private static Thread runningThread;
     private static boolean closingDown = false;
     private static Task runningTask;
-    private TaskFactory subject;
-    private TaskData data;
 
     static {
         try {
@@ -58,6 +57,9 @@ public class Task extends AnaplanApiClientObject {
         }
     }
 
+    private TaskFactory subject;
+    private TaskData data;
+
     Task(TaskFactory subject, TaskData data) {
         super(subject.getModel().getWorkspace().getService());
         this.subject = subject;
@@ -66,62 +68,11 @@ public class Task extends AnaplanApiClientObject {
 
     /**
      * Fetches the running task if any
+     *
      * @return
      */
     public static Task getRunningTask() {
         return runningTask;
-    }
-
-    TaskFactory getSubject() {
-        return subject;
-    }
-
-    String getId() {
-        return data.getTaskId();
-    }
-
-    /**
-     * Send a request to the server to cancel the task.
-     * This is not guaranteed to stop a task; a task can only be stopped if it
-     * can roll back the changes it made to leave the model in a consistent state.
-     *
-     * @return The current status of the task
-     */
-    public TaskStatus cancel() throws AnaplanAPIException {
-        TaskStatusResponse response = subject.cancelTask(data.getTaskId());
-        if (response != null && response.getItem() != null) {
-            return new TaskStatus(this, response.getItem());
-        }
-        throw new InvalidTaskStatusError(data.getTaskId(), response);
-    }
-
-    /**
-     * Get the current status of the task.
-     *
-     * @return The current status of the task
-     */
-    public TaskStatus getStatus() throws AnaplanAPIException {
-        TaskStatusResponse response = subject.getTaskStatus(data.getTaskId());
-        if (response != null && response.getItem() != null) {
-            return new TaskStatus(this, response.getItem());
-        }
-        throw new InvalidTaskStatusError(data.getTaskId(), response);
-    }
-
-    /**
-     * Track the progress of a task on the server until completion. If
-     * run from a command line (ie <tt>System.console() != null</tt>) the
-     * progress will be displayed on the controlling terminal.
-     *
-     * @return the result following completion of the task; null otherwise
-     */
-    public synchronized TaskResult runTask() throws AnaplanAPIException, InterruptedException {
-        runningThread = Thread.currentThread();
-        runningTask = this;
-        TaskResult result = trackRunningTask(runningTask, false);
-        runningTask = null;
-        runningThread = null;
-        return result;
     }
 
     /**
@@ -186,8 +137,8 @@ public class Task extends AnaplanApiClientObject {
                     // Allow up to 30 attempts before giving up.
                     if (++failCount > 30) {
                         throw new AnaplanAPIException(
-                                "Task was started, but server cannot be reached"
-                                        + " - giving up after 30 attempts", thrown);
+                            "Task was started, but server cannot be reached"
+                                + " - giving up after 30 attempts", thrown);
                     }
                     LOG.debug("Failed to get status ({}); retrying in {}s\n", Utils.formatThrowable(thrown), interval / 1000);
                     LOG.info("Checking in {}s", interval / 1000);
@@ -207,7 +158,7 @@ public class Task extends AnaplanApiClientObject {
                     LOG.info("Run status: {}", message.toString());
                 }
             } while (!(wasClosingDown && totalTime > 1000) && (status == null || !(
-                    status.getTaskState() == TaskStatus.State.COMPLETE ||
+                status.getTaskState() == TaskStatus.State.COMPLETE ||
                     status.getTaskState() == TaskStatus.State.CANCELLED)));
         } finally {
             if (status == null || status.getResult() == null) {
@@ -228,13 +179,65 @@ public class Task extends AnaplanApiClientObject {
                 LogUtils.logSeparatorOperationResponses();
                 if (status.getResult() != null) {
                     LOG.info(status.getResult().isSuccessful() ?
-                            "<<< The operation was successful >>>  =)" :
-                            "!!! The operation failed !!!  =(");
+                        "<<< The operation was successful >>>  =)" :
+                        "!!! The operation failed !!!  =(");
                 }
                 LogUtils.logSeparatorOperationStatus();
                 Arrays.asList(status.getResult().toString().split("\n")).forEach(LOG::info);
             }
         }
         return (status != null) ? status.getResult() : null;
+    }
+
+    TaskFactory getSubject() {
+        return subject;
+    }
+
+    String getId() {
+        return data.getTaskId();
+    }
+
+    /**
+     * Send a request to the server to cancel the task.
+     * This is not guaranteed to stop a task; a task can only be stopped if it
+     * can roll back the changes it made to leave the model in a consistent state.
+     *
+     * @return The current status of the task
+     */
+    public TaskStatus cancel() throws AnaplanAPIException {
+        TaskStatusResponse response = subject.cancelTask(data.getTaskId());
+        if (response != null && response.getItem() != null) {
+            return new TaskStatus(this, response.getItem());
+        }
+        throw new InvalidTaskStatusError(data.getTaskId(), response);
+    }
+
+    /**
+     * Get the current status of the task.
+     *
+     * @return The current status of the task
+     */
+    public TaskStatus getStatus() throws AnaplanAPIException {
+        TaskStatusResponse response = subject.getTaskStatus(data.getTaskId());
+        if (response != null && response.getItem() != null) {
+            return new TaskStatus(this, response.getItem());
+        }
+        throw new InvalidTaskStatusError(data.getTaskId(), response);
+    }
+
+    /**
+     * Track the progress of a task on the server until completion. If
+     * run from a command line (ie <tt>System.console() != null</tt>) the
+     * progress will be displayed on the controlling terminal.
+     *
+     * @return the result following completion of the task; null otherwise
+     */
+    public synchronized TaskResult runTask() throws AnaplanAPIException, InterruptedException {
+        runningThread = Thread.currentThread();
+        runningTask = this;
+        TaskResult result = trackRunningTask(runningTask, false);
+        runningTask = null;
+        runningThread = null;
+        return result;
     }
 }

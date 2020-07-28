@@ -1,14 +1,16 @@
 package com.anaplan.client.logging;
 
+import com.anaplan.client.Program;
+import com.google.common.base.Strings;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
-import com.anaplan.client.Program;
-import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class LogUtils {
 
@@ -25,7 +27,7 @@ public class LogUtils {
         context.getLogger(packageName).setLevel(Level.DEBUG);
 
         ConsoleAppender<ILoggingEvent> consoleAppender = (ConsoleAppender<ILoggingEvent>) context.getLogger(packageName)
-                .getAppender(consoleAppenderName);
+            .getAppender(consoleAppenderName);
         if (consoleAppender != null) {
             consoleAppender.stop();
 

@@ -21,25 +21,13 @@ import java.security.interfaces.RSAPrivateKey;
  * Credentials for accessing the Anaplan API service.
  */
 public final class Credentials {
-    /**
-     * Represents an authentication method.
-     */
-    public enum Scheme {
-        BASIC,
-        NTLM,
-        CA_CERTIFICATE
-    }
-
     private Scheme scheme;
-
     private String userName;
     private String passPhrase;
     private String domain;
     private String workstation;
-
     private X509Certificate certificate;
     private RSAPrivateKey privateKey;
-
     /**
      * Create user/passPhrase credentials for service authentication, or
      * simple/digest proxy authentication.
@@ -67,10 +55,10 @@ public final class Credentials {
      * @since 1.3.1
      */
     public Credentials(
-            String userName,
-            String passPhrase,
-            String domain,
-            String workstation
+        String userName,
+        String passPhrase,
+        String domain,
+        String workstation
     ) {
         this.userName = userName;
         this.passPhrase = passPhrase;
@@ -149,5 +137,14 @@ public final class Credentials {
 
     public boolean isNtlm() {
         return domain != null || workstation != null;
+    }
+
+    /**
+     * Represents an authentication method.
+     */
+    public enum Scheme {
+        BASIC,
+        NTLM,
+        CA_CERTIFICATE
     }
 }

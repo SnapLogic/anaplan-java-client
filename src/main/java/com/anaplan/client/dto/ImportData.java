@@ -14,12 +14,12 @@ public class ImportData extends NamedObjectData {
         return importType;
     }
 
-    public String getImportDataSourceId() {
-        return importDataSourceId;
-    }
-
     public void setImportType(String importType) {
         this.importType = importType;
+    }
+
+    public String getImportDataSourceId() {
+        return importDataSourceId;
     }
 
     public void setImportDataSourceId(String importDataSourceId) {

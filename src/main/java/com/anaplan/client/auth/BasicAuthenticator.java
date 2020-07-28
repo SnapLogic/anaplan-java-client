@@ -3,9 +3,11 @@ package com.anaplan.client.auth;
 import com.anaplan.client.dto.responses.AuthenticationResp;
 import com.anaplan.client.ex.AnaplanAPIException;
 import com.anaplan.client.transport.ConnectionProperties;
-import feign.FeignException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import feign.FeignException;
 
 /**
  * Created by Spondon Saha
@@ -26,7 +28,7 @@ public class BasicAuthenticator extends AbstractAuthenticator {
         LOG.info("Authenticating via Basic...");
         try {
             AuthenticationResp authResponse = getAuthClient()
-                    .authenticateBasic(okhttp3.Credentials.basic(getCredentials().getUserName(), getCredentials().getPassPhrase()));
+                .authenticateBasic(okhttp3.Credentials.basic(getCredentials().getUserName(), getCredentials().getPassPhrase()));
             setAuthTokenExpiresAt(authResponse.getItem().getExpiresAt());
             return authResponse.getItem().getTokenValue().getBytes();
         } catch (FeignException e) {

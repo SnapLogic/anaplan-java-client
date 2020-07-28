@@ -19,6 +19,7 @@ import com.anaplan.client.dto.ServerFileData;
 import com.anaplan.client.dto.TaskResultData;
 import com.anaplan.client.dto.TaskResultDetailData;
 import com.anaplan.client.ex.AnaplanAPIException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,7 +143,7 @@ public class TaskResult {
 
             @Override
             public void upLoad(File source, boolean deleteExisting, int chunkSize)
-                    throws AnaplanAPIException {
+                throws AnaplanAPIException {
                 throw new AnaplanAPIException("Cannot upload to failure dump");
             }
         };

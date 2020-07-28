@@ -14,6 +14,7 @@ public class ByteArrayDeserializer {
     /**
      * Deserializes from character-stream to raw bytes. This is usually downloading data from the server,
      * such as file-chunks.
+     *
      * @param inputStream
      * @return byte[]
      * @throws IOException if there's an error while closing the input stream

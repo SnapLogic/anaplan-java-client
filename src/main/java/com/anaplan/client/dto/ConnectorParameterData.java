@@ -15,20 +15,20 @@ public class ConnectorParameterData {
         return sourceIdOrType;
     }
 
-    public String getParameterId() {
-        return parameterId;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
     public void setSourceIdOrType(String sourceIdOrType) {
         this.sourceIdOrType = sourceIdOrType;
     }
 
+    public String getParameterId() {
+        return parameterId;
+    }
+
     public void setParameterId(String parameterId) {
         this.parameterId = parameterId;
+    }
+
+    public String getValue() {
+        return value;
     }
 
     public void setValue(String value) {

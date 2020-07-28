@@ -32,6 +32,7 @@ import com.anaplan.client.ex.ModulesNotFoundException;
 import com.anaplan.client.ex.ProcessesNotFoundException;
 import com.anaplan.client.ex.ServerFilesNotFoundException;
 import com.anaplan.client.transport.Paginator;
+
 import feign.FeignException;
 
 /**
@@ -74,7 +75,6 @@ public class Model extends AnaplanApiClientObject {
      * Get the active state of the model
      *
      * @return The active state of this model
-     *
      * @since 1.4.4
      */
     public String getActiveState() {
@@ -98,9 +98,9 @@ public class Model extends AnaplanApiClientObject {
                     setPageInfo(response.getMeta().getPaging());
                     if (getPageInfo().getCurrentPageSize() > 0 && response.getItem() != null) {
                         return response.getItem()
-                                .stream()
-                                .map(moduleData -> new Module(self, moduleData))
-                                .toArray(Module[]::new);
+                            .stream()
+                            .map(moduleData -> new Module(self, moduleData))
+                            .toArray(Module[]::new);
                     } else {
                         return new Module[]{};
                     }
@@ -121,8 +121,8 @@ public class Model extends AnaplanApiClientObject {
     public Module getModule(String identifier) throws AnaplanAPIException {
         for (Module module : getModules()) {
             if (identifier.equals(module.getId())
-                    || identifier.equalsIgnoreCase(module.getCode())
-                    || identifier.equalsIgnoreCase(module.getName())) {
+                || identifier.equalsIgnoreCase(module.getCode())
+                || identifier.equalsIgnoreCase(module.getName())) {
                 return module;
             }
         }
@@ -145,9 +145,9 @@ public class Model extends AnaplanApiClientObject {
                     setPageInfo(response.getMeta().getPaging());
                     if (getPageInfo().getCurrentPageSize() > 0 && response.getItem() != null) {
                         return response.getItem()
-                                .stream()
-                                .map(serverFileData -> new ServerFile(self, serverFileData))
-                                .toArray(ServerFile[]::new);
+                            .stream()
+                            .map(serverFileData -> new ServerFile(self, serverFileData))
+                            .toArray(ServerFile[]::new);
                     } else {
                         return new ServerFile[]{};
                     }
@@ -165,11 +165,11 @@ public class Model extends AnaplanApiClientObject {
      * @return The server file, or null if no such object exists
      */
     public ServerFile getServerFile(String identifier)
-            throws AnaplanAPIException {
+        throws AnaplanAPIException {
         for (ServerFile serverFile : getServerFiles()) {
             if (identifier.equals(serverFile.getId())
-                    || identifier.equalsIgnoreCase(serverFile.getCode())
-                    || identifier.equalsIgnoreCase(serverFile.getName())) {
+                || identifier.equalsIgnoreCase(serverFile.getCode())
+                || identifier.equalsIgnoreCase(serverFile.getName())) {
                 return serverFile;
             }
         }
@@ -192,10 +192,10 @@ public class Model extends AnaplanApiClientObject {
         requestData.setOrigin(origin);
 
         ServerFileResponse response = getApi().createImportDataSource(
-                workspace.getId(),
-                getId(),
-                name,
-                requestData);
+            workspace.getId(),
+            getId(),
+            name,
+            requestData);
         if (response == null || response.getItem() == null) {
             throw new CreateImportDatasourceError(name);
         }
@@ -217,9 +217,9 @@ public class Model extends AnaplanApiClientObject {
                     setPageInfo(response.getMeta().getPaging());
                     if (getPageInfo().getCurrentPageSize() > 0 && response.getItem() != null) {
                         return response.getItem()
-                                .stream()
-                                .map(importData -> new Import(self, importData))
-                                .toArray(Import[]::new);
+                            .stream()
+                            .map(importData -> new Import(self, importData))
+                            .toArray(Import[]::new);
                     } else {
                         return new Import[]{};
                     }
@@ -239,8 +239,8 @@ public class Model extends AnaplanApiClientObject {
     public Import getImport(String identifier) throws AnaplanAPIException {
         for (Import serverImport : getImports()) {
             if (identifier.equals(serverImport.getId())
-                    || identifier.equalsIgnoreCase(serverImport.getCode())
-                    || identifier.equalsIgnoreCase(serverImport.getName())) {
+                || identifier.equalsIgnoreCase(serverImport.getCode())
+                || identifier.equalsIgnoreCase(serverImport.getName())) {
                 return serverImport;
             }
         }
@@ -262,9 +262,9 @@ public class Model extends AnaplanApiClientObject {
                     setPageInfo(response.getMeta().getPaging());
                     if (getPageInfo().getCurrentPageSize() > 0 && response.getItem() != null) {
                         return response.getItem()
-                                .stream()
-                                .map(exportData -> new Export(self, exportData))
-                                .toArray(Export[]::new);
+                            .stream()
+                            .map(exportData -> new Export(self, exportData))
+                            .toArray(Export[]::new);
                     } else {
                         return new Export[]{};
                     }
@@ -284,8 +284,8 @@ public class Model extends AnaplanApiClientObject {
     public Export getExport(String identifier) throws AnaplanAPIException {
         for (Export serverExport : getExports()) {
             if (identifier.equals(serverExport.getId())
-                    || identifier.equalsIgnoreCase(serverExport.getCode())
-                    || identifier.equalsIgnoreCase(serverExport.getName())) {
+                || identifier.equalsIgnoreCase(serverExport.getCode())
+                || identifier.equalsIgnoreCase(serverExport.getName())) {
                 return serverExport;
             }
         }
@@ -308,9 +308,9 @@ public class Model extends AnaplanApiClientObject {
                     setPageInfo(response.getMeta().getPaging());
                     if (getPageInfo().getCurrentPageSize() > 0 && response.getItem() != null) {
                         return response.getItem()
-                                .stream()
-                                .map(actionData -> new Action(self, actionData))
-                                .toArray(Action[]::new);
+                            .stream()
+                            .map(actionData -> new Action(self, actionData))
+                            .toArray(Action[]::new);
                     } else {
                         return new Action[]{};
                     }
@@ -331,8 +331,8 @@ public class Model extends AnaplanApiClientObject {
     public Action getAction(String identifier) throws AnaplanAPIException {
         for (Action serverAction : getActions()) {
             if (identifier.equals(serverAction.getId())
-                    || identifier.equalsIgnoreCase(serverAction.getCode())
-                    || identifier.equalsIgnoreCase(serverAction.getName())) {
+                || identifier.equalsIgnoreCase(serverAction.getCode())
+                || identifier.equalsIgnoreCase(serverAction.getName())) {
                 return serverAction;
             }
         }
@@ -355,9 +355,9 @@ public class Model extends AnaplanApiClientObject {
                     setPageInfo(response.getMeta().getPaging());
                     if (getPageInfo().getCurrentPageSize() > 0 && response.getItem() != null) {
                         return response.getItem()
-                                .stream()
-                                .map(processData -> new Process(self, processData))
-                                .toArray(Process[]::new);
+                            .stream()
+                            .map(processData -> new Process(self, processData))
+                            .toArray(Process[]::new);
                     } else {
                         return new Process[]{};
                     }
@@ -378,8 +378,8 @@ public class Model extends AnaplanApiClientObject {
     public Process getProcess(String identifier) throws AnaplanAPIException {
         for (Process serverProcess : getProcesses()) {
             if (identifier.equals(serverProcess.getId())
-                    || identifier.equalsIgnoreCase(serverProcess.getCode())
-                    || identifier.equalsIgnoreCase(serverProcess.getName())) {
+                || identifier.equalsIgnoreCase(serverProcess.getCode())
+                || identifier.equalsIgnoreCase(serverProcess.getName())) {
                 return serverProcess;
             }
         }

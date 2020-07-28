@@ -1,6 +1,7 @@
 package com.anaplan.client.transport.interceptors;
 
 import com.anaplan.client.auth.Authenticator;
+
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 

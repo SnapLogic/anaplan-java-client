@@ -21,46 +21,8 @@ import com.anaplan.client.dto.TaskStatusData;
  */
 public class TaskStatus {
 
-    /**
-     * Represents the current state of a task on the server.
-     */
-    public enum State {
-        /**
-         * The task is scheduled but has not started yet.
-         */
-        NOT_STARTED("Waiting to start"),
-        /**
-         * The task has started and is in progress.
-         */
-        IN_PROGRESS("In Progress"),
-        /**
-         * The task has completed, either successfully or unsuccessfully.
-         */
-        COMPLETE("Complete"),
-        /**
-         * The task has been cancelled, and is in the process of rolling back any changes made
-         */
-        CANCELLING("Cancelling"),
-        /**
-         * The task has been cancelled, and the process of rolling back any changes made has completed
-         */
-        CANCELLED("Cancelled");
-
-        private final String description;
-
-        State(String description) {
-            this.description = description;
-        }
-
-        public String getValue() {
-            return description;
-        }
-    }
-
     private Task task;
-
     private TaskStatusData data;
-
     private TaskResult result;
 
     TaskStatus(Task task, TaskStatusData data) {
@@ -126,5 +88,41 @@ public class TaskStatus {
      */
     public String getCancelledBy() {
         return data.getCancelledBy();
+    }
+
+    /**
+     * Represents the current state of a task on the server.
+     */
+    public enum State {
+        /**
+         * The task is scheduled but has not started yet.
+         */
+        NOT_STARTED("Waiting to start"),
+        /**
+         * The task has started and is in progress.
+         */
+        IN_PROGRESS("In Progress"),
+        /**
+         * The task has completed, either successfully or unsuccessfully.
+         */
+        COMPLETE("Complete"),
+        /**
+         * The task has been cancelled, and is in the process of rolling back any changes made
+         */
+        CANCELLING("Cancelling"),
+        /**
+         * The task has been cancelled, and the process of rolling back any changes made has completed
+         */
+        CANCELLED("Cancelled");
+
+        private final String description;
+
+        State(String description) {
+            this.description = description;
+        }
+
+        public String getValue() {
+            return description;
+        }
     }
 }

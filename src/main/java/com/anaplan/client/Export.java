@@ -44,76 +44,76 @@ public class Export extends TaskFactory {
     @Override
     TaskResponse createActionTask(TaskParametersData taskParametersData) {
         return getApi().createExportTask(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                getData().merge(taskParametersData, ExportData.class));
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            getData().merge(taskParametersData, ExportData.class));
     }
 
     @Override
     TasksResponse getTasks(int offset) {
         return getApi().getExportTasks(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                offset);
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            offset);
     }
 
     @Override
     TaskStatusResponse cancelTask(String taskId) {
         return getApi().cancelExportTask(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId);
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId);
     }
 
     @Override
     TaskStatusResponse getTaskStatus(String taskId) {
         return getApi().getExportTaskStatus(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId);
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId);
     }
 
     @Override
     ChunksResponse getDumpFileChunks(String taskId) {
         return getApi().getExportDumpFileChunks(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId);
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId);
     }
 
     @Override
     byte[] getDumpFileChunkContent(String taskId, String chunkId) {
         return getApi().getExportDumpFileChunkContent(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId,
-                chunkId);
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId,
+            chunkId);
     }
 
     @Override
     ChunksResponse getNestedDumpFileChunks(String taskId, String nestedObjectId) {
         return getApi().getExportNestedDumpFileChunks(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId,
-                nestedObjectId);
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId,
+            nestedObjectId);
     }
 
     @Override
     byte[] getNestedDumpFileChunkContent(String taskId, String nestedObjectId, String chunkId) {
         return getApi().getExportNestedDumpFileChunkContent(
-                getWorkspace().getId(),
-                getModel().getId(),
-                getId(),
-                taskId,
-                nestedObjectId,
-                chunkId);
+            getWorkspace().getId(),
+            getModel().getId(),
+            getId(),
+            taskId,
+            nestedObjectId,
+            chunkId);
     }
 }

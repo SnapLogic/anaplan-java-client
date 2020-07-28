@@ -1,6 +1,7 @@
 // Copyright 2012 Anaplan Limited
 package com.anaplan.client;
 
+import com.anaplan.client.api.AnaplanAPI;
 import com.anaplan.client.dto.ActionData;
 import com.anaplan.client.dto.ExportData;
 import com.anaplan.client.dto.ImportData;
@@ -70,17 +71,19 @@ public class ActionTest extends BaseTest {
     @Test
     public void testAction() throws Exception {
         // create mock API response for fetching list of Actions.
-        when(mockModel.getApi().getActions(mockModel.getWorkspace().getId(),
+        AnaplanAPI api = mockModel.getApi();
+        String id = mockModel.getWorkspace().getId();
+        when(api.getActions(id,
                 mockModel.getId(), 0))
                 .thenReturn(createFeignResponse(listOfActionsResponseJson, ActionsResponse.class));
         Action mockAction = mockModel.getAction("Action 0");
 
         // mock out API calls to create task and monitor
-        when(mockModel.getApi().createActionTask(anyString(), anyString(), anyString(),
+        when(api.createActionTask(anyString(), anyString(), anyString(),
                 any(ActionData.class)))
                 .thenReturn(createFeignResponse(createTaskResponseJson, TaskResponse.class));
-        when(mockModel.getApi().getActionTaskStatus(
-                mockModel.getWorkspace().getId(), mockModel.getId(), mockAction.getId(),
+        when(api.getActionTaskStatus(
+            id, mockModel.getId(), mockAction.getId(),
                 "task-id"))
                 .thenReturn(createFeignResponse(taskSuccessResponseJson, TaskStatusResponse.class));
 

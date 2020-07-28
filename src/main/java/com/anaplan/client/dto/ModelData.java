@@ -17,23 +17,12 @@ public class ModelData {
         return id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Get the active state
-     *
-     * @return The active state
-     *
-     * @since 1.4.4
-     */
-    public String getActiveState() {
-        return activeState;
-    }
-
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public void setName(String name) {
@@ -41,10 +30,19 @@ public class ModelData {
     }
 
     /**
+     * Get the active state
+     *
+     * @return The active state
+     * @since 1.4.4
+     */
+    public String getActiveState() {
+        return activeState;
+    }
+
+    /**
      * Set the active state
      *
      * @param activeState The active state
-     *
      * @since 1.4.4
      */
     public void setActiveState(String activeState) {

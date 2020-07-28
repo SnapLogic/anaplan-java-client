@@ -14,20 +14,20 @@
 
 package com.anaplan.client.transport;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-
 import org.apache.http.impl.auth.NTLMEngine;
 import org.apache.http.impl.auth.NTLMEngineException;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 
 /**
  * Utilizes JCIFS for NTLM authentication.
  */
 public class JCIFSEngine implements NTLMEngine {
 
+    private static final Throwable initFailure;
     private static Class<?> NTLM_FLAGS, TYPE_1_MESSAGE, TYPE_2_MESSAGE, TYPE_3_MESSAGE, BASE64;
     private static int TYPE_1_FLAGS, NTLMSSP_TARGET_TYPE_DOMAIN, NTLMSSP_TARGET_TYPE_SERVER;
-    private static final Throwable initFailure;
 
     static {
         Throwable failure = null;
@@ -41,11 +41,11 @@ public class JCIFSEngine implements NTLMEngine {
             NTLMSSP_TARGET_TYPE_DOMAIN = NTLM_FLAGS.getField("NTLMSSP_TARGET_TYPE_DOMAIN").getInt(null);
             NTLMSSP_TARGET_TYPE_SERVER = NTLM_FLAGS.getField("NTLMSSP_TARGET_TYPE_SERVER").getInt(null);
             for (String flagName : Arrays.asList(
-                    "NTLMSSP_NEGOTIATE_56",
-                    "NTLMSSP_NEGOTIATE_128",
-                    "NTLMSSP_NEGOTIATE_NTLM2",
-                    "NTLMSSP_NEGOTIATE_ALWAYS_SIGN",
-                    "NTLMSSP_REQUEST_TARGET")) {
+                "NTLMSSP_NEGOTIATE_56",
+                "NTLMSSP_NEGOTIATE_128",
+                "NTLMSSP_NEGOTIATE_NTLM2",
+                "NTLMSSP_NEGOTIATE_ALWAYS_SIGN",
+                "NTLMSSP_REQUEST_TARGET")) {
                 type1Flags |= NTLM_FLAGS.getField(flagName).getInt(null);
             }
             TYPE_1_FLAGS = type1Flags;
@@ -62,7 +62,7 @@ public class JCIFSEngine implements NTLMEngine {
                 throw (InvocationTargetException) initFailure;
             }
             throw new InvocationTargetException(initFailure,
-                    "Cannot load JCIFSEngine");
+                "Cannot load JCIFSEngine");
         }
     }
 
@@ -71,7 +71,7 @@ public class JCIFSEngine implements NTLMEngine {
      */
     @Override
     public String generateType1Msg(String domain, String workstation)
-            throws NTLMEngineException {
+        throws NTLMEngineException {
         try {
             Object type1Message = TYPE_1_MESSAGE.getConstructor(Integer.TYPE, String.class, String.class).newInstance(TYPE_1_FLAGS, domain, workstation);
             byte[] byteArray = (byte[]) TYPE_1_MESSAGE.getMethod("toByteArray").invoke(type1Message);
@@ -87,7 +87,7 @@ public class JCIFSEngine implements NTLMEngine {
     @Override
     public String generateType3Msg(String username, String password,
                                    String domain, String workstation, String challenge)
-            throws NTLMEngineException {
+        throws NTLMEngineException {
         if (domain == null) {
             throw new NTLMEngineException("Domain must be specified with user name");
         }
@@ -96,7 +96,7 @@ public class JCIFSEngine implements NTLMEngine {
             Object type2Message = TYPE_2_MESSAGE.getConstructor(byteArray.getClass()).newInstance(byteArray);
             Integer type2Flags = (Integer) TYPE_2_MESSAGE.getMethod("getFlags").invoke(type2Message);
             int type3Flags = type2Flags
-                    & (0xffffffff ^ (NTLMSSP_TARGET_TYPE_DOMAIN | NTLMSSP_TARGET_TYPE_SERVER));
+                & (0xffffffff ^ (NTLMSSP_TARGET_TYPE_DOMAIN | NTLMSSP_TARGET_TYPE_SERVER));
             Object type3Message = TYPE_3_MESSAGE.getConstructor(TYPE_2_MESSAGE, String.class, String.class, String.class, String.class, Integer.TYPE).newInstance(type2Message, password, domain, username, workstation, type3Flags);
             byte[] type3ByteArray = (byte[]) TYPE_3_MESSAGE.getMethod("toByteArray").invoke(type3Message);
             return (String) BASE64.getMethod("encode", type3ByteArray.getClass()).invoke(null, type3ByteArray);

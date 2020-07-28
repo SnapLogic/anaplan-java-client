@@ -32,6 +32,7 @@ import com.anaplan.client.transport.retryer.AnaplanJdbcRetryer;
 import com.anaplan.client.transport.retryer.FeignApiRetryer;
 import com.google.common.base.Strings;
 import com.opencsv.CSVParser;
+
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMParser;
@@ -45,7 +46,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.Console;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -63,7 +75,11 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
+import java.util.Scanner;
 
 /**
  * A command-line interface to the Anaplan Connect API library. Running the
@@ -75,6 +91,9 @@ import java.util.*;
 
 public abstract class Program {
 
+    private static final int MIN_CHUNK_SIZE = 1;
+    private static final int MAX_CHUNK_SIZE = MIN_CHUNK_SIZE * 50;
+    private static final Logger LOG = LoggerFactory.getLogger(Program.class);
     private static int debugLevel = 0;
     private static boolean quiet = false;
     private static Service service = null;
@@ -105,16 +124,11 @@ public abstract class Program {
     private static TaskResult lastResult = null;
     private static boolean somethingDone = false;
     private static TaskParameters taskParameters = new TaskParameters();
-
-    private static final int MIN_CHUNK_SIZE = 1;
-    private static final int MAX_CHUNK_SIZE = MIN_CHUNK_SIZE * 50;
     private static int chunkSize = fetchChunkSize(String.valueOf(MIN_CHUNK_SIZE));
     private static int maxRetryCount = Constants.MIN_RETRY_COUNT;
     private static int retryTimeout = Constants.MIN_RETRY_TIMEOUT_SECS;
     private static int httpConnectionTimeout = Constants.MIN_HTTP_CONNECTION_TIMEOUT_SECS;
     private ConnectionProperties properties;
-
-    private static final Logger LOG = LoggerFactory.getLogger(Program.class);
 
     /**
      * Parse and process the command line. The process will exit with status 1
@@ -162,9 +176,9 @@ public abstract class Program {
                     if (model != null) {
                         for (ServerFile serverFile : model.getServerFiles()) {
                             LOG.info(Utils.formatTSV(
-                                    serverFile.getId(),
-                                    serverFile.getCode(),
-                                    serverFile.getName()));
+                                serverFile.getId(),
+                                serverFile.getCode(),
+                                serverFile.getName()));
                         }
                     }
                 } else if (arg == "-I" || arg == "-imports") {
@@ -173,11 +187,11 @@ public abstract class Program {
                     if (model != null) {
                         for (Import serverImport : model.getImports()) {
                             LOG.info(Utils.formatTSV(
-                                    serverImport.getId(),
-                                    serverImport.getCode(),
-                                    serverImport.getName(),
-                                    serverImport.getImportType(),
-                                    serverImport.getSourceFileId()));
+                                serverImport.getId(),
+                                serverImport.getCode(),
+                                serverImport.getName(),
+                                serverImport.getImportType(),
+                                serverImport.getSourceFileId()));
                         }
                     }
                 } else if (arg == "-A" || arg == "-actions") {
@@ -186,9 +200,9 @@ public abstract class Program {
                     if (model != null) {
                         for (Action serverAction : model.getActions()) {
                             LOG.info(Utils.formatTSV(
-                                    serverAction.getId(),
-                                    serverAction.getCode(),
-                                    serverAction.getName()));
+                                serverAction.getId(),
+                                serverAction.getCode(),
+                                serverAction.getName()));
                         }
                     }
                 } else if (arg == "-E" || arg == "-exports") {
@@ -197,9 +211,9 @@ public abstract class Program {
                     if (model != null) {
                         for (Export serverExport : model.getExports()) {
                             LOG.info(Utils.formatTSV(
-                                    serverExport.getId(),
-                                    serverExport.getCode(),
-                                    serverExport.getName()));
+                                serverExport.getId(),
+                                serverExport.getCode(),
+                                serverExport.getName()));
                         }
                     }
                 } else if (arg == "-P" || arg == "-processes") {
@@ -208,9 +222,9 @@ public abstract class Program {
                     if (model != null) {
                         for (Process serverProcess : model.getProcesses()) {
                             LOG.info(Utils.formatTSV(
-                                    serverProcess.getId(),
-                                    serverProcess.getCode(),
-                                    serverProcess.getName()));
+                                serverProcess.getId(),
+                                serverProcess.getCode(),
+                                serverProcess.getName()));
                         }
                     }
                 } else if (arg == "-emd") {
@@ -221,12 +235,12 @@ public abstract class Program {
                     if ("\t".equals(delimiter))
                         delimiter = "\\t";
                     LOG.info("Export: " + export.getName()
-                            + "\ncolumns: "
-                            + String.valueOf(emd.getColumnCount()) + "\nrows: "
-                            + String.valueOf(emd.getRowCount()) + "\nformat: "
-                            + emd.getExportFormat() + "\ndelimiter: "
-                            + delimiter + "\nencoding: " + emd.getEncoding()
-                            + "\nseparator: " + emd.getSeparator());
+                        + "\ncolumns: "
+                        + String.valueOf(emd.getColumnCount()) + "\nrows: "
+                        + String.valueOf(emd.getRowCount()) + "\nformat: "
+                        + emd.getExportFormat() + "\ndelimiter: "
+                        + delimiter + "\nencoding: " + emd.getEncoding()
+                        + "\nseparator: " + emd.getSeparator());
 
                     String[] headerNames = emd.getHeaderNames();
                     DataType[] dataTypes = emd.getDataTypes();
@@ -234,9 +248,9 @@ public abstract class Program {
 
                     for (int i = 0; i < headerNames.length; i++) {
                         LOG.info(" col " + String.valueOf(i)
-                                + ":\n  name: " + headerNames[i] + "\n  type: "
-                                + dataTypes[i].toString() + "\n  list: "
-                                + listNames[i]);
+                            + ":\n  name: " + headerNames[i] + "\n  type: "
+                            + dataTypes[i].toString() + "\n  list: "
+                            + listNames[i]);
                     }
                 } else if (arg == "-x" || arg == "-execute") {
                     TaskFactory taskFactory = null;
@@ -251,7 +265,7 @@ public abstract class Program {
                         taskFactory = getAction(workspaceId, modelId, actionId);
                     } else if (processId != null) {
                         taskFactory = getProcess(workspaceId, modelId,
-                                processId);
+                            processId);
                     }
                     if (taskFactory != null) {
                         somethingDone = true;
@@ -259,7 +273,7 @@ public abstract class Program {
                         lastResult = task.runTask();
                     } else {
                         LOG.error("An import, export, action or "
-                                + "process must be specified before " + arg);
+                            + "process must be specified before " + arg);
                     }
 
                 } else if (arg == "-gets" || arg == "-getc") {
@@ -276,11 +290,11 @@ public abstract class Program {
                     }
                     if (null != sourceId) {
                         ServerFile serverFile = getServerFile(workspaceId,
-                                modelId, sourceId, false);
+                            modelId, sourceId, false);
                         if (serverFile != null) {
                             if (arg == "-gets") {
                                 InputStream inputStream = serverFile
-                                        .getDownloadStream();
+                                    .getDownloadStream();
                                 byte[] buffer = new byte[4096];
                                 int read;
                                 do {
@@ -292,7 +306,7 @@ public abstract class Program {
                                 inputStream.close();
                             } else {
                                 CellReader cellReader = serverFile
-                                        .getDownloadCellReader();
+                                    .getDownloadCellReader();
                                 String[] row = cellReader.getHeaderRow();
                                 do {
                                     StringBuilder line = new StringBuilder();
@@ -315,11 +329,11 @@ public abstract class Program {
                 } else if (arg == "-puts" || arg == "-putc") {
                     somethingDone = true;
                     ServerFile serverFile = getServerFile(workspaceId, modelId,
-                            fileId, true);
+                        fileId, true);
                     if (serverFile != null) {
                         if (arg == "-puts") {
                             OutputStream uploadStream = serverFile
-                                    .getUploadStream(chunkSize);
+                                .getUploadStream(chunkSize);
                             byte[] buf = new byte[4096];
                             int read;
                             do {
@@ -330,9 +344,9 @@ public abstract class Program {
                             uploadStream.close();
                         } else {
                             CellWriter cellWriter = serverFile
-                                    .getUploadCellWriter(chunkSize);
+                                .getUploadCellWriter(chunkSize);
                             LineNumberReader lnr = new LineNumberReader(
-                                    new InputStreamReader(System.in));
+                                new InputStreamReader(System.in));
                             String line;
                             while (null != (line = lnr.readLine())) {
                                 String[] row = line.split("\\t");
@@ -345,7 +359,7 @@ public abstract class Program {
                             cellWriter.close();
                         }
                         LOG.info("Upload to " + fileId
-                                + " completed.");
+                            + " completed.");
                     }
                     // Now check the additional parameter is present before
                     // processing consuming options
@@ -439,7 +453,7 @@ public abstract class Program {
                     }
                     if (sourceId != null) {
                         ServerFile serverFile = getServerFile(workspaceId, modelId,
-                                sourceId, false);
+                            sourceId, false);
                         if (serverFile != null) {
                             serverFile.downLoad(targetFile, true);
                             LOG.info("The server file {} has been downloaded to {}", sourceId, targetFile.getAbsolutePath());
@@ -449,13 +463,13 @@ public abstract class Program {
                     somethingDone = true;
                     File sourceFile = new File(args[argi++]);
                     String destId = fileId == null ? sourceFile.getName()
-                            : fileId;
+                        : fileId;
                     ServerFile serverFile = getServerFile(workspaceId, modelId,
-                            destId, true);
+                        destId, true);
                     if (serverFile != null) {
                         serverFile.upLoad(sourceFile, true, chunkSize);
                         LOG.info("The file \"" + sourceFile
-                                + "\" has been uploaded as " + destId + ".");
+                            + "\" has been uploaded as " + destId + ".");
                     }
                 } else if (arg == "-i" || arg == "-import") {
                     importId = args[argi++];
@@ -480,12 +494,12 @@ public abstract class Program {
                 } else if (arg == "-xl" || arg == "-locale") {
                     String[] localeName = args[argi++].split("_");
                     taskParameters.setLocale(localeName[0],
-                            localeName.length > 0 ? localeName[1] : null);
+                        localeName.length > 0 ? localeName[1] : null);
                 } else if (arg == "-xc" || arg == "-connectorproperty") {
                     String[] propEntry = args[argi++].split(":", 2);
                     if (propEntry.length != 2) {
                         throw new IllegalArgumentException("expected " + arg
-                                + " [(<source>|<type>)/]property:(value|?)");
+                            + " [(<source>|<type>)/]property:(value|?)");
                     }
 
                     String[] propKey = propEntry[0].split("/", 2);
@@ -495,30 +509,30 @@ public abstract class Program {
                     }
                     String property = propKey[propKey.length - 1];
                     String propValue = promptForValue(prompt, propEntry[1],
-                            property.toLowerCase().endsWith("password"));
+                        property.toLowerCase().endsWith("password"));
                     if (propKey.length == 2) {
                         taskParameters.addConnectorParameter(propKey[0],
-                                propKey[1], propValue);
+                            propKey[1], propValue);
                     } else {
                         taskParameters.addConnectorParameter(propKey[0],
-                                propValue);
+                            propValue);
                     }
                 } else if (arg == "-xm" || arg == "-mappingproperty") {
                     String[] propEntry = args[argi++].split(":", 2);
                     if (propEntry.length != 2) {
                         throw new IllegalArgumentException("expected " + arg
-                                + " [(<import id>|<import name>)/]dimension"
-                                + ":(value|?)");
+                            + " [(<import id>|<import name>)/]dimension"
+                            + ":(value|?)");
                     }
                     String[] propKey = propEntry[0].split("/", 2);
                     String propValue = promptForValue(propEntry[0],
-                            propEntry[1], false);
+                        propEntry[1], false);
                     if (propKey.length == 2) {
                         taskParameters.addMappingParameter(propKey[0],
-                                propKey[1], propValue);
+                            propKey[1], propValue);
                     } else {
                         taskParameters.addMappingParameter(propKey[0],
-                                propValue);
+                            propValue);
                     }
                 } else if (arg == "-o" || arg == "-output") {
                     File outputFile = new File(args[argi++]);
@@ -532,13 +546,13 @@ public abstract class Program {
                     JDBCConfig jdbcConfig = loadJdbcProperties(propertiesFilePath);
                     if (fileId != null) {
                         ServerFile serverFile = getServerFile(workspaceId, modelId,
-                                fileId, true);
+                            fileId, true);
                         CellWriter cellWriter = null;
                         CellReader cellReader = null;
                         try {
                             cellWriter = serverFile.getUploadCellWriter(chunkSize);
                             cellReader = new JDBCCellReader(jdbcConfig)
-                                    .connectAndExecute();
+                                .connectAndExecute();
                             String[] row = cellReader.getHeaderRow();
                             cellWriter.writeHeaderRow(row);
                             int rowCount = 0;
@@ -560,7 +574,7 @@ public abstract class Program {
                         }
                     } else if (exportId != null) {
                         ServerFile serverFile = getServerFile(workspaceId, modelId,
-                                exportId, true);
+                            exportId, true);
                         if (serverFile != null) {
                             CellWriter cellWriter = null;
                             somethingDone = true;
@@ -581,7 +595,7 @@ public abstract class Program {
                                     List<ChunkData> chunkList = serverFile.getChunks();
                                     //jdbc params exists
                                     if (jdbcConfig.getJdbcParams() != null && jdbcConfig.getJdbcParams().length > 0
-                                            && !jdbcConfig.getJdbcParams()[0].equals("")) {
+                                        && !jdbcConfig.getJdbcParams()[0].equals("")) {
                                         mapcols = new int[jdbcConfig.getJdbcParams().length];
                                         //extract matching anaplan columns
                                         for (int i = 0; i < jdbcConfig.getJdbcParams().length; i++) {
@@ -598,9 +612,10 @@ public abstract class Program {
                                     cellWriter = new JDBCCellWriter(jdbcConfig);
                                     for (ChunkData chunk : chunkList) {
                                         byte[] chunkContent = serverFile.getChunkContent(chunk.getId());
-                                        if (chunkContent == null) throw new NoChunkError(chunk.getId());
+                                        if (chunkContent == null)
+                                            throw new NoChunkError(chunk.getId());
                                         inputStream = new ByteArrayInputStream(chunkContent);
-                                        transferredrows = cellWriter.writeDataRow(exportId,maxRetryCount,retryTimeout,inputStream, chunkList.size(), chunk.getId(), mapcols, columnCount, separator);
+                                        transferredrows = cellWriter.writeDataRow(exportId, maxRetryCount, retryTimeout, inputStream, chunkList.size(), chunk.getId(), mapcols, columnCount, separator);
                                     }
                                     if (transferredrows != 0) {
                                         LOG.info("Transferred {} records to {}", transferredrows, jdbcConfig.getJdbcConnectionUrl());
@@ -608,16 +623,16 @@ public abstract class Program {
                                         LOG.info("No records were transferred to {}", jdbcConfig.getJdbcConnectionUrl());
                                     }
                                     k = maxRetryCount;
-                                } catch (AnaplanAPIException ape){
+                                } catch (AnaplanAPIException ape) {
                                     LOG.error(ape.getMessage());
-                                    k=maxRetryCount;
+                                    k = maxRetryCount;
                                 } catch (Exception e) {
                                     AnaplanJdbcRetryer anaplanJdbcRetryer = new AnaplanJdbcRetryer((long) (retryTimeout * 1000),
-                                            (long) Constants.MAX_RETRY_TIMEOUT_SECS * 1000,
-                                            FeignApiRetryer.DEFAULT_BACKOFF_MULTIPLIER);
+                                        (long) Constants.MAX_RETRY_TIMEOUT_SECS * 1000,
+                                        FeignApiRetryer.DEFAULT_BACKOFF_MULTIPLIER);
                                     Long interval = anaplanJdbcRetryer.nextMaxInterval(k);
                                     try {
-                                        LOG.debug("Could not connect to the database! Will retry in {} seconds ", interval/1000);
+                                        LOG.debug("Could not connect to the database! Will retry in {} seconds ", interval / 1000);
                                         // do not retry if we get any other error
                                         Thread.sleep(interval);
                                     } catch (InterruptedException e1) {
@@ -627,8 +642,8 @@ public abstract class Program {
                                 } finally {
                                     if (inputStream != null)
                                         inputStream.close();
-                                    if (cellWriter!=null)
-                                    cellWriter.close();
+                                    if (cellWriter != null)
+                                        cellWriter.close();
                                 }
                             }
                         }
@@ -677,8 +692,8 @@ public abstract class Program {
         }
         if (chSize > MAX_CHUNK_SIZE || chSize < MIN_CHUNK_SIZE) {
             throw new IllegalArgumentException("Chunksize [" + chSize
-                    + "] cannot be less than " + MIN_CHUNK_SIZE
-                    + "MB or larger than " + MAX_CHUNK_SIZE + "MB");
+                + "] cannot be less than " + MIN_CHUNK_SIZE
+                + "MB or larger than " + MAX_CHUNK_SIZE + "MB");
         }
         chunkSize = 1000 * 1000 * chSize;  // MB to bytes
         return chunkSize;
@@ -693,7 +708,7 @@ public abstract class Program {
         }
         if (maxRetryCount > Constants.MAX_RETRY_COUNT || maxRetryCount < Constants.MIN_RETRY_COUNT) {
             throw new IllegalArgumentException("Max-Retry count can only be within the range ["
-                    + Constants.MIN_RETRY_COUNT + ", " + Constants.MAX_RETRY_COUNT + "]");
+                + Constants.MIN_RETRY_COUNT + ", " + Constants.MAX_RETRY_COUNT + "]");
         }
         return maxRetryCount;
     }
@@ -707,7 +722,7 @@ public abstract class Program {
         }
         if (httpTimeout > Constants.MAX_HTTP_CONNECTION_TIMEOUT_SECS || httpTimeout < Constants.MIN_HTTP_CONNECTION_TIMEOUT_SECS) {
             throw new IllegalArgumentException("Http-Timeout can only be within the range ["
-                    + Constants.MIN_HTTP_CONNECTION_TIMEOUT_SECS + ", " + Constants.MAX_HTTP_CONNECTION_TIMEOUT_SECS + "]");
+                + Constants.MIN_HTTP_CONNECTION_TIMEOUT_SECS + ", " + Constants.MAX_HTTP_CONNECTION_TIMEOUT_SECS + "]");
         }
         return httpTimeout;
     }
@@ -721,7 +736,7 @@ public abstract class Program {
         }
         if (retryTimeout > Constants.MAX_RETRY_TIMEOUT_SECS || retryTimeout < Constants.MIN_RETRY_TIMEOUT_SECS) {
             throw new IllegalArgumentException("Retry timeout can only be within the range ["
-                    + Constants.MIN_RETRY_TIMEOUT_SECS + ", " + Constants.MAX_RETRY_TIMEOUT_SECS + "]");
+                + Constants.MIN_RETRY_TIMEOUT_SECS + ", " + Constants.MAX_RETRY_TIMEOUT_SECS + "]");
         }
         return retryTimeout;
     }
@@ -741,17 +756,17 @@ public abstract class Program {
             if (!taskResult.getNestedResults().isEmpty()) {
                 if (outputLocation.exists() && !outputLocation.isDirectory()) {
                     throw new IllegalArgumentException(
-                            "Process dumps require a directory, but path \""
-                                    + outputLocation.getPath() + " is not a directory");
+                        "Process dumps require a directory, but path \""
+                            + outputLocation.getPath() + " is not a directory");
                 }
                 if (!outputLocation.exists() && !outputLocation.mkdirs()) {
                     throw new AnaplanAPIException("Failed to create directory "
-                            + outputLocation.getPath());
+                        + outputLocation.getPath());
                 }
                 int index = 0;
                 for (TaskResult nestedResult : taskResult.getNestedResults()) {
                     ServerFile nestedDumpServerFile = nestedResult
-                            .getFailureDump();
+                        .getFailureDump();
                     if (nestedDumpServerFile != null) {
                         String fileName = "" + index;
                         if (nestedResult.getObjectId() != null) {
@@ -771,7 +786,7 @@ public abstract class Program {
                 ServerFile failureDump = taskResult.getFailureDump();
                 failureDump.downLoad(outputLocation, true);
                 LOG.info("Dump file written to \"" + outputLocation
-                        + "\"");
+                    + "\"");
             }
         } else {
             LOG.info("No dump file is available.");
@@ -797,7 +812,7 @@ public abstract class Program {
      */
     protected static ServerFile getServerFile(String workspaceId,
                                               String modelId, String fileId, boolean create)
-            throws AnaplanAPIException {
+        throws AnaplanAPIException {
         Model model = getModel(workspaceId, modelId);
         if (model == null) {
             return null;
@@ -810,16 +825,16 @@ public abstract class Program {
         if (serverFile == null) {
             if (create) {
                 serverFile = model.createServerFileImportDataSource(fileId,
-                        "Anaplan Connect");
+                    "Anaplan Connect");
             } else {
                 LOG.error("File \"" + fileId
-                        + "\" not found in workspace " + workspaceId
-                        + ", model " + modelId);
+                    + "\" not found in workspace " + workspaceId
+                    + ", model " + modelId);
             }
         }
         // Set proper encoding based on what server sends back
-        if (serverFile!=null && serverFile.getData()!=null && serverFile.getData().getEncoding()!=null) {
-            System.setProperty("file.encoding",serverFile.getData().getEncoding());
+        if (serverFile != null && serverFile.getData() != null && serverFile.getData().getEncoding() != null) {
+            System.setProperty("file.encoding", serverFile.getData().getEncoding());
         }
         return serverFile;
     }
@@ -846,8 +861,8 @@ public abstract class Program {
         Import serverImport = model.getImport(importId);
         if (serverImport == null) {
             LOG.error("Import \"" + importId
-                    + "\" not found in workspace " + workspaceId + ", model "
-                    + modelId);
+                + "\" not found in workspace " + workspaceId + ", model "
+                + modelId);
         }
         return serverImport;
     }
@@ -874,8 +889,8 @@ public abstract class Program {
         Export serverExport = model.getExport(exportId);
         if (serverExport == null) {
             LOG.error("Export \"" + exportId
-                    + "\" not found in workspace " + workspaceId + ", model "
-                    + modelId);
+                + "\" not found in workspace " + workspaceId + ", model "
+                + modelId);
         }
         return serverExport;
     }
@@ -902,8 +917,8 @@ public abstract class Program {
         Action serverAction = model.getAction(actionId);
         if (serverAction == null) {
             LOG.error("Action \"" + actionId
-                    + "\" not found in workspace " + workspaceId + ", model "
-                    + modelId);
+                + "\" not found in workspace " + workspaceId + ", model "
+                + modelId);
         }
         return serverAction;
     }
@@ -930,8 +945,8 @@ public abstract class Program {
         Process serverProcess = model.getProcess(processId);
         if (serverProcess == null) {
             LOG.error("Process \"" + processId
-                    + "\" not found in workspace " + workspaceId + ", model "
-                    + modelId);
+                + "\" not found in workspace " + workspaceId + ", model "
+                + modelId);
         }
         return serverProcess;
     }
@@ -961,9 +976,9 @@ public abstract class Program {
         View view = module.getView(viewId);
         if (view == null) {
             LOG.error("View \"" + viewId
-                    + "\" not found in workspace \"" + workspaceId
-                    + "\", model \"" + modelId + "\", module \"" + moduleId
-                    + "\"");
+                + "\" not found in workspace \"" + workspaceId
+                + "\", model \"" + modelId + "\", module \"" + moduleId
+                + "\"");
         }
         return view;
     }
@@ -992,8 +1007,8 @@ public abstract class Program {
         Module module = model.getModule(moduleId);
         if (module == null) {
             LOG.error("Module \"" + moduleId
-                    + "\" not found in workspace \"" + workspaceId
-                    + "\", model \"" + modelId + "\"");
+                + "\" not found in workspace \"" + workspaceId
+                + "\", model \"" + modelId + "\"");
         }
         return module;
     }
@@ -1008,7 +1023,7 @@ public abstract class Program {
      * @since 1.3
      */
     protected static Model getModel(String workspaceId, String modelId)
-            throws AnaplanAPIException {
+        throws AnaplanAPIException {
         Workspace workspace = getWorkspace(workspaceId);
         if (workspace == null) {
             return null;
@@ -1020,7 +1035,7 @@ public abstract class Program {
         Model model = new Model(workspace, new ModelData());
         if (model == null) {
             LOG.error("Model \"" + modelId
-                    + "\" not found in workspace \"" + workspaceId + "\"");
+                + "\" not found in workspace \"" + workspaceId + "\"");
         }
         return model;
     }
@@ -1034,7 +1049,7 @@ public abstract class Program {
      * @since 1.3
      */
     protected static Workspace getWorkspace(String workspaceId)
-            throws AnaplanAPIException {
+        throws AnaplanAPIException {
         if (workspaceId == null || workspaceId.isEmpty()) {
             LOG.error("A workspace ID must be provided");
             return null;
@@ -1042,7 +1057,7 @@ public abstract class Program {
         Workspace result = getService().getWorkspace(workspaceId);
         if (result == null) {
             LOG.error("Workspace \"" + workspaceId
-                    + "\" does not exist or is not available to this user");
+                + "\" does not exist or is not available to this user");
         }
         return result;
     }
@@ -1134,10 +1149,20 @@ public abstract class Program {
                 username = console.readLine("Username:");
             } else {
                 throw new UnsupportedOperationException(
-                        "Username must be specified");
+                    "Username must be specified");
             }
         }
         return username;
+    }
+
+    /**
+     * Set the username of the Anaplan account for the service to use.
+     *
+     * @param username the email address of the Anaplan user
+     * @since 1.3
+     */
+    protected static void setUsername(String username) {
+        Program.username = username;
     }
 
     /**
@@ -1155,10 +1180,20 @@ public abstract class Program {
                 passphrase = new String(console.readPassword("Password:"));
             } else {
                 throw new UnsupportedOperationException(
-                        "Password/Passphrase must be specified");
+                    "Password/Passphrase must be specified");
             }
         }
         return passphrase;
+    }
+
+    /**
+     * Set the passphrase of the Anaplan account for the service to use.
+     *
+     * @param passphrase the passphrase of the Anaplan user
+     * @since 1.3
+     */
+    protected static void setPassphrase(String passphrase) {
+        Program.passphrase = passphrase;
     }
 
     /**
@@ -1219,10 +1254,21 @@ public abstract class Program {
                 proxyUsername = console.readLine("Proxy username:");
             } else {
                 throw new UnsupportedOperationException(
-                        "Proxy username must be specified");
+                    "Proxy username must be specified");
             }
         }
         return proxyUsername;
+    }
+
+    /**
+     * Set the username for an authenticating proxy
+     *
+     * @param username the username for the authenticating proxy
+     * @since 1.3.1
+     */
+    protected static void setProxyUsername(String username) {
+        Program.proxyUsername = username;
+        proxyUsernameSet = true;
     }
 
     /**
@@ -1240,10 +1286,20 @@ public abstract class Program {
                 proxyPassphrase = new String(console.readPassword("Proxy password:"));
             } else {
                 throw new UnsupportedOperationException(
-                        "Proxy password must be specified");
+                    "Proxy password must be specified");
             }
         }
         return proxyPassphrase;
+    }
+
+    /**
+     * Set the passphrase for an authenticating proxy
+     *
+     * @param passphrase the passphrase for the authenticating proxy
+     * @since 1.3.1
+     */
+    protected static void setProxyPassphrase(String passphrase) {
+        Program.proxyPassphrase = passphrase;
     }
 
     /**
@@ -1255,47 +1311,6 @@ public abstract class Program {
      */
     protected static void setDebugLevel(int debugLevel) {
         Program.debugLevel = debugLevel;
-    }
-
-    /**
-     * Set the username of the Anaplan account for the service to use.
-     *
-     * @param username the email address of the Anaplan user
-     * @since 1.3
-     */
-    protected static void setUsername(String username) {
-        Program.username = username;
-    }
-
-    /**
-     * Set the passphrase of the Anaplan account for the service to use.
-     *
-     * @param passphrase the passphrase of the Anaplan user
-     * @since 1.3
-     */
-    protected static void setPassphrase(String passphrase) {
-        Program.passphrase = passphrase;
-    }
-
-    /**
-     * Set the username for an authenticating proxy
-     *
-     * @param username the username for the authenticating proxy
-     * @since 1.3.1
-     */
-    protected static void setProxyUsername(String username) {
-        Program.proxyUsername = username;
-        proxyUsernameSet = true;
-    }
-
-    /**
-     * Set the passphrase for an authenticating proxy
-     *
-     * @param passphrase the passphrase for the authenticating proxy
-     * @since 1.3.1
-     */
-    protected static void setProxyPassphrase(String passphrase) {
-        Program.proxyPassphrase = passphrase;
     }
 
     /**
@@ -1500,18 +1515,18 @@ public abstract class Program {
     protected static String promptForValue(String propertyName,
                                            String propertyValue, boolean password) {
         if (null == propertyValue || 0 == propertyValue.length()
-                || propertyValue.equals("?")) {
+            || propertyValue.equals("?")) {
             Console console = System.console();
             if (console != null) {
                 if (password) {
                     propertyValue = new String(
-                            console.readPassword(propertyName + ":"));
+                        console.readPassword(propertyName + ":"));
                 } else {
                     propertyValue = console.readLine(propertyName + ":");
                 }
             } else {
                 throw new UnsupportedOperationException("Value for "
-                        + propertyName + " must be specified");
+                    + propertyName + " must be specified");
             }
         }
         return propertyValue;
@@ -1546,7 +1561,7 @@ public abstract class Program {
      * @throws FileNotFoundException
      */
     private static X509Certificate loadCertificateFromFile(File certificateFile) throws
-            CertificateException, FileNotFoundException {
+        CertificateException, FileNotFoundException {
         // loading certificate chain
         CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
         InputStream certificateStream = new FileInputStream(certificateFile);
@@ -1570,7 +1585,7 @@ public abstract class Program {
 
     public static RSAPrivateKey loadPrivateKeyFromFile(String privateKeyPath, String passphrase) {
         try {
-            if(passphrase.isEmpty()){
+            if (passphrase.isEmpty()) {
                 PemReader pemReader = new PemReader(new FileReader(privateKeyPath));
                 PemObject pemObject = pemReader.readPemObject();
                 byte[] pemContent = pemObject.getContent();
@@ -1643,90 +1658,90 @@ public abstract class Program {
         File passwordFile = new File(userDirectory.toString(), Constants.PW_FILE_PATH_SEGMENT);
 
         LOG.error("Options are:\n"
-                + "\n"
-                + "General:\n"
-                + "--------\n"
-                + "(-h|-help): display this help\n"
-                + "(-version): display version information\n"
-                + "(-d|-debug): Show more detailed output\n"
-                + "(-q|-quiet): Show less detailed output\n"
-                + "\n"
-                + "Connection:\n"
-                + "-----------\n"
-                + "(-s|-service) <service URI>: API service endpoint"
-                + " (defaults to https://api.anaplan.com/)\n"
-                + "(-u|-user) <username>[:<password>]"
-                + ": Anaplan user name + (optional) password\n"
-                + "(-auth|-authServiceUrl) <Auth Service URL>: Anaplan SSO server."
-                + "(-c|-certificate) <CA certificate filepath>"
-                + ": Path to user certificate used for authentication (an alternative to using a key store)\n"
-                + "(-pkey|-privatekey) <privatekey path>:<passphrase>"
-                + ": Path to user privatekey used for authentication (an alternative to using a key store) + passphrase\n"
-                + "(-k|-keystore) <keystore path>"
-                + ": Path to local key store containing user certificate(s) for authentication\n"
-                + "(-kp|-keystorepass) <keystore password>"
-                + ": Password for the key store (if not provided, password is read from obfuscated file '"
-                + passwordFile.getAbsolutePath()
-                + "', or prompted for)\n"
-                + "(-ka|-keystorealias) <keystore alias>"
-                + ": Alias of the public certificate in the specified key store\n"
-                + "(-v|-via) <proxy URI>: use specified proxy\n"
-                + "(-vu|-viauser) [<domain>[\\<workstation>]\\]<username>[:<password>]: use proxy credentials\n"
-                + "(-mrc|-maxretrycount): Max retry count for API calls\n"
-                + "(-rt|-retrytimeout): Retry timeout for Http client calls\n"
-                + "(-ct|-httptimeout): Http client connection timeout\n"
-                + "\n"
-                + "Workspace Contents:\n"
-                + "-------------------\n"
-                + "(-w|-workspace) (<id>|<name>): select a workspace by id/name\n"
-                + "(-m|-model) (<id>|<name>): select a model by id/name\n"
-                + "(-F|-files): list available server files in selected model\n"
-                + "(-f|-file) (<id>|<name>): select a server file by id/name\n"
-                + "(-ch|-chunksize): upload chunk-size number, defaults to 1048576.\n"
-                + "\n"
-                + "Data Transfer:\n"
-                + "--------------\n"
-                + "(-g|-get) <local path>: Download specified server file to local file\n"
-                + "-gets Write specified server file to standard output\n"
-                + "-getc Write tab-separated server file to standard output\n"
-                + "(-p|-put) <local path>: Upload to specified server file from local file\n"
-                + "-puts Upload to specified server file from standard input\n"
-                + "-putc Upload to specified server file from tab-separated standard input\n"
-                + "\n"
-                + "Server Actions:\n"
-                + "---------------\n"
-                + "(-I|-imports): list available imports in selected model\n"
-                + "(-i|-import) (<id>|<name>): select an import by id/name\n"
-                + "(-E|-exports): list available exports in selected model\n"
-                + "(-e|-export) (<id>|<name>): select an export by id/name\n"
-                + "(-A|-actions): list available actions in selected model\n"
-                + "(-a|-action) (<id>|<name>): select an action by id/name\n"
-                + "(-P|-processes): list available processes in selected model\n"
-                + "(-pr|-process) <id/name>: select a process by id/name\n"
-                + "(-xl|-locale) <locale> Specify locale (eg en_US) to perform server opertion\n"
-                + "(-xc|-connectorproperty) [(<source>|<type>)/]property:(value|?):\n"
-                + "    specify import data source connection property\n"
-                + "(-xm|-mappingproperty) [(<import id>|<import name>)/]dimension:(value|?):\n"
-                + "    specify prompt-at-runtime import mapping value"
-                + "(-x|-execute): Run the selected import/export/action/process\n"
-                + "\n"
-                + "Action Information:\n"
-                + "-------------------\n"
-                + "(-o|-output) <local path>: Retrieve dump file(s) for completed import/process\n"
-                + "-emd: Describe layout of an export (metadata)\n"
-                + "\n"
-                + "JDBC:\n"
-                + "-----\n"
-                + "-loadclass <class name>: This parameter is not required since AC 1.4.4.\n"
-                + "    It will be removed in next version of AC.\n"
-                + "-jdbcproperties: Path to JDBC properties file.\n");
+            + "\n"
+            + "General:\n"
+            + "--------\n"
+            + "(-h|-help): display this help\n"
+            + "(-version): display version information\n"
+            + "(-d|-debug): Show more detailed output\n"
+            + "(-q|-quiet): Show less detailed output\n"
+            + "\n"
+            + "Connection:\n"
+            + "-----------\n"
+            + "(-s|-service) <service URI>: API service endpoint"
+            + " (defaults to https://api.anaplan.com/)\n"
+            + "(-u|-user) <username>[:<password>]"
+            + ": Anaplan user name + (optional) password\n"
+            + "(-auth|-authServiceUrl) <Auth Service URL>: Anaplan SSO server."
+            + "(-c|-certificate) <CA certificate filepath>"
+            + ": Path to user certificate used for authentication (an alternative to using a key store)\n"
+            + "(-pkey|-privatekey) <privatekey path>:<passphrase>"
+            + ": Path to user privatekey used for authentication (an alternative to using a key store) + passphrase\n"
+            + "(-k|-keystore) <keystore path>"
+            + ": Path to local key store containing user certificate(s) for authentication\n"
+            + "(-kp|-keystorepass) <keystore password>"
+            + ": Password for the key store (if not provided, password is read from obfuscated file '"
+            + passwordFile.getAbsolutePath()
+            + "', or prompted for)\n"
+            + "(-ka|-keystorealias) <keystore alias>"
+            + ": Alias of the public certificate in the specified key store\n"
+            + "(-v|-via) <proxy URI>: use specified proxy\n"
+            + "(-vu|-viauser) [<domain>[\\<workstation>]\\]<username>[:<password>]: use proxy credentials\n"
+            + "(-mrc|-maxretrycount): Max retry count for API calls\n"
+            + "(-rt|-retrytimeout): Retry timeout for Http client calls\n"
+            + "(-ct|-httptimeout): Http client connection timeout\n"
+            + "\n"
+            + "Workspace Contents:\n"
+            + "-------------------\n"
+            + "(-w|-workspace) (<id>|<name>): select a workspace by id/name\n"
+            + "(-m|-model) (<id>|<name>): select a model by id/name\n"
+            + "(-F|-files): list available server files in selected model\n"
+            + "(-f|-file) (<id>|<name>): select a server file by id/name\n"
+            + "(-ch|-chunksize): upload chunk-size number, defaults to 1048576.\n"
+            + "\n"
+            + "Data Transfer:\n"
+            + "--------------\n"
+            + "(-g|-get) <local path>: Download specified server file to local file\n"
+            + "-gets Write specified server file to standard output\n"
+            + "-getc Write tab-separated server file to standard output\n"
+            + "(-p|-put) <local path>: Upload to specified server file from local file\n"
+            + "-puts Upload to specified server file from standard input\n"
+            + "-putc Upload to specified server file from tab-separated standard input\n"
+            + "\n"
+            + "Server Actions:\n"
+            + "---------------\n"
+            + "(-I|-imports): list available imports in selected model\n"
+            + "(-i|-import) (<id>|<name>): select an import by id/name\n"
+            + "(-E|-exports): list available exports in selected model\n"
+            + "(-e|-export) (<id>|<name>): select an export by id/name\n"
+            + "(-A|-actions): list available actions in selected model\n"
+            + "(-a|-action) (<id>|<name>): select an action by id/name\n"
+            + "(-P|-processes): list available processes in selected model\n"
+            + "(-pr|-process) <id/name>: select a process by id/name\n"
+            + "(-xl|-locale) <locale> Specify locale (eg en_US) to perform server opertion\n"
+            + "(-xc|-connectorproperty) [(<source>|<type>)/]property:(value|?):\n"
+            + "    specify import data source connection property\n"
+            + "(-xm|-mappingproperty) [(<import id>|<import name>)/]dimension:(value|?):\n"
+            + "    specify prompt-at-runtime import mapping value"
+            + "(-x|-execute): Run the selected import/export/action/process\n"
+            + "\n"
+            + "Action Information:\n"
+            + "-------------------\n"
+            + "(-o|-output) <local path>: Retrieve dump file(s) for completed import/process\n"
+            + "-emd: Describe layout of an export (metadata)\n"
+            + "\n"
+            + "JDBC:\n"
+            + "-----\n"
+            + "-loadclass <class name>: This parameter is not required since AC 1.4.4.\n"
+            + "    It will be removed in next version of AC.\n"
+            + "-jdbcproperties: Path to JDBC properties file.\n");
     }
 
     private static void displayVersion() {
         LOG.debug(Strings.repeat("=", 70));
         LOG.debug("Anaplan Connect {}.{}.{}", Constants.AC_MAJOR, Constants.AC_MINOR, Constants.AC_REVISION);
         LOG.debug("{} ({})/ ({})/", System.getProperty("java.vm.name"), System.getProperty("java.vendor"),
-                System.getProperty("java.vm.version"), System.getProperty("java.version"));
+            System.getProperty("java.vm.version"), System.getProperty("java.version"));
         LOG.debug("({}{})/{}", System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version"));
         LOG.debug(Strings.repeat("=", 70));
     }

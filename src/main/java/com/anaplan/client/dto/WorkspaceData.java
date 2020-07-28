@@ -13,40 +13,40 @@ public class WorkspaceData {
     private String name;
     private Long sizeAllowance;
 
+    public WorkspaceData(String id) {
+        this.id = id;
+    }
+
     public String getId() {
         return id;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public Long getSizeAllowance() {
-        return sizeAllowance;
     }
 
     public void setId(String id) {
         this.id = id;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setSizeAllowance(Long sizeAllowance) {
-        this.sizeAllowance = sizeAllowance;
+    public Long getSizeAllowance() {
+        return sizeAllowance;
     }
 
-    public WorkspaceData(String id) {
-        this.id = id;
+    public void setSizeAllowance(Long sizeAllowance) {
+        this.sizeAllowance = sizeAllowance;
     }
 
     public boolean equals(Object other) {

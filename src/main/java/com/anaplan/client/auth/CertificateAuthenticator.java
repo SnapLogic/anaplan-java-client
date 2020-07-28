@@ -7,7 +7,7 @@ import com.anaplan.client.ex.AnaplanAPITransportException;
 import com.anaplan.client.transport.ConnectionProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
-import feign.FeignException;
+
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.slf4j.Logger;
@@ -25,6 +25,8 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.Base64;
 
+import feign.FeignException;
+
 /**
  * Created by Spondon Saha
  * User: spondonsaha
@@ -41,25 +43,6 @@ public class CertificateAuthenticator extends AbstractAuthenticator {
         super(properties);
     }
 
-    @Override
-    public byte[] authenticate() {
-        LOG.info("Authenticating via Certificate...");
-        try {
-            AuthenticationResp authResponse = getAuthClient()
-                    .authenticateCertificate(
-                            generateCertHash(getCredentials().getCertificate()),
-                            createNonceVerificationData(getCredentials().getPrivateKey()));
-            
-            setAuthTokenExpiresAt(authResponse.getItem().getExpiresAt());
-
-            String tokenValue = authResponse.getItem().getTokenValue();
-
-            return tokenValue.getBytes();
-        } catch (FeignException ex) {
-            throw new AnaplanAPIException("Certificate Authentication failed!", ex);
-        }
-    }
-
     /**
      * Generate a random byte-array to help with the private-key challenge
      *
@@ -73,6 +56,25 @@ public class CertificateAuthenticator extends AbstractAuthenticator {
         random.nextBytes(bytes);
 
         return bytes;
+    }
+
+    @Override
+    public byte[] authenticate() {
+        LOG.info("Authenticating via Certificate...");
+        try {
+            AuthenticationResp authResponse = getAuthClient()
+                .authenticateCertificate(
+                    generateCertHash(getCredentials().getCertificate()),
+                    createNonceVerificationData(getCredentials().getPrivateKey()));
+
+            setAuthTokenExpiresAt(authResponse.getItem().getExpiresAt());
+
+            String tokenValue = authResponse.getItem().getTokenValue();
+
+            return tokenValue.getBytes();
+        } catch (FeignException ex) {
+            throw new AnaplanAPIException("Certificate Authentication failed!", ex);
+        }
     }
 
     /**
@@ -104,13 +106,13 @@ public class CertificateAuthenticator extends AbstractAuthenticator {
     String generateCertHash(X509Certificate certificate) {
         // use bouncycastle library to generate cert in PEM format 
         Writer stringWriter = new StringWriter();
-        try(PemWriter pemWriter = new PemWriter(stringWriter)) {
+        try (PemWriter pemWriter = new PemWriter(stringWriter)) {
             PemObject certPem = new PemObject("CERTIFICATE", certificate.getEncoded());
             pemWriter.writeObject(certPem);
         } catch (CertificateEncodingException | IOException ex) {
             throw new AnaplanAPITransportException("Failed to encode user certificate: " + ex);
         }
-        
+
         // now base-64 encode the pem string as that is how auth-service expects it to be
         String certHash = Base64.getEncoder().encodeToString(stringWriter.toString().getBytes());
         return certHash;

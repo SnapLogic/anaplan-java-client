@@ -1,4 +1,5 @@
 package com.anaplan.client.dto.responses;
+
 import com.anaplan.client.dto.UserData;
 
 /**

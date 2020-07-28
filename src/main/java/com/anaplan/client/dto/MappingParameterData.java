@@ -15,20 +15,20 @@ public class MappingParameterData {
         return importId;
     }
 
-    public String getEntityType() {
-        return entityType;
-    }
-
-    public String getEntityName() {
-        return entityName;
-    }
-
     public void setImportId(String importId) {
         this.importId = importId;
     }
 
+    public String getEntityType() {
+        return entityType;
+    }
+
     public void setEntityType(String entityType) {
         this.entityType = entityType;
+    }
+
+    public String getEntityName() {
+        return entityName;
     }
 
     public void setEntityName(String entityName) {

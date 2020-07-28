@@ -49,7 +49,7 @@ public interface CellWriter {
      * @param separator An array of string cell values, one per column
      */
 
-    int writeDataRow(String exportId,int maxRetryCount,int retryTimeout, InputStream inputStream,int chunks,String chunkId, int[] mapcols, int columnCount, String separator) throws AnaplanAPIException, IOException, SQLException;
+    int writeDataRow(String exportId, int maxRetryCount, int retryTimeout, InputStream inputStream, int chunks, String chunkId, int[] mapcols, int columnCount, String separator) throws AnaplanAPIException, IOException, SQLException;
 
     /**
      * Complete the transfer. Any remaining data is transferred,

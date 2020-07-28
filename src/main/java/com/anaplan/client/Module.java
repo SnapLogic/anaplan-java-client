@@ -42,12 +42,12 @@ public class Module extends NamedObject {
             @Override
             public View[] getPage(int offset) {
                 ViewsResponse response = getApi().getViews(getModel().getWorkspace().getId(),
-                        getModel().getId(), getId(), offset);
+                    getModel().getId(), getId(), offset);
                 if (getPageInfo().getCurrentPageSize() > 0 && response.getItem() != null) {
                     return response.getItem()
-                            .stream()
-                            .map(viewData -> new View(self, viewData))
-                            .toArray(View[]::new);
+                        .stream()
+                        .map(viewData -> new View(self, viewData))
+                        .toArray(View[]::new);
                 } else {
                     return new View[]{};
                 }
@@ -64,8 +64,8 @@ public class Module extends NamedObject {
     public View getView(String identifier) throws AnaplanAPIException {
         for (View view : getViews()) {
             if (identifier.equals(view.getId())
-                    || identifier.equalsIgnoreCase(view.getCode())
-                    || identifier.equalsIgnoreCase(view.getName())) {
+                || identifier.equalsIgnoreCase(view.getCode())
+                || identifier.equalsIgnoreCase(view.getName())) {
                 return view;
             }
         }

@@ -21,44 +21,44 @@ public class TaskStatusData {
         return taskId;
     }
 
-    public double getProgress() {
-        return progress;
-    }
-
-    public String getCurrentStep() {
-        return currentStep;
-    }
-
-    public TaskStatus.State getTaskState() {
-        return taskState;
-    }
-
-    public TaskResultData getResult() {
-        return result;
-    }
-
-    public String getCancelledBy() {
-        return cancelledBy;
-    }
-
     public void setTaskId(String taskId) {
         this.taskId = taskId;
+    }
+
+    public double getProgress() {
+        return progress;
     }
 
     public void setProgress(double progress) {
         this.progress = progress;
     }
 
+    public String getCurrentStep() {
+        return currentStep;
+    }
+
     public void setCurrentStep(String currentStep) {
         this.currentStep = currentStep;
+    }
+
+    public TaskStatus.State getTaskState() {
+        return taskState;
     }
 
     public void setTaskState(TaskStatus.State taskState) {
         this.taskState = taskState;
     }
 
+    public TaskResultData getResult() {
+        return result;
+    }
+
     public void setResult(TaskResultData result) {
         this.result = result;
+    }
+
+    public String getCancelledBy() {
+        return cancelledBy;
     }
 
     public void setCancelledBy(String cancelledBy) {
