@@ -14,12 +14,12 @@
   },
   "models": [
     {
-      "activeState": "DELETED",
+      "activeState": "UNLOCKED",
       "id": "testModelGuid",
       "name": "Model 0"
     },
     {
-      "activeState": "ARCHIVED",
+      "activeState": "UNLOCKED",
       "id": "08B4AFAF5DEA463999B0A5CBCC18DF69",
       "name": "Model 1"
     },

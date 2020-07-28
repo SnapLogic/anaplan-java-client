@@ -20,11 +20,11 @@ import static org.junit.Assert.assertEquals;
 
 public class JDBCCellReaderTest extends BaseTest {
 
-    private static final String testJdbcQueryProperties = "/test-jdbc-query.properties";
+    private static final String testJdbcQueryProperties = "/test-jdbc-query-imports.properties";
     private JDBCCellReader jdbcCellReader;
     private JDBCConfig jdbcConfig;
 
-    private JDBCConfig loadConfig() throws IOException {
+    public JDBCConfig loadConfig() throws IOException {
         Properties jdbcProperties = new Properties();
         try {
             jdbcProperties.load(JDBCCellReader.class.getResourceAsStream(testJdbcQueryProperties));

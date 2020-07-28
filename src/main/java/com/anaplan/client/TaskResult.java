@@ -82,7 +82,7 @@ public class TaskResult {
      * @since 1.3
      */
     public String getObjectName() {
-        return data.getObjectName();
+        return data.getObjectId();
     }
 
     /**

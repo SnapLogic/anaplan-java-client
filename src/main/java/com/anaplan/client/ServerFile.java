@@ -22,26 +22,17 @@ import com.anaplan.client.ex.AnaplanAPIException;
 import com.anaplan.client.ex.CreateImportDatasourceError;
 import com.anaplan.client.ex.NoChunkError;
 import com.anaplan.client.logging.LogUtils;
+
 import com.opencsv.CSVParser;
+
 import feign.FeignException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FilterOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.io.SequenceInputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -134,10 +125,13 @@ public class ServerFile extends NamedObject {
 
             // Get list of chunks from server
             List<ChunkData> chunkList = getChunks();
-            for (ChunkData chunk : chunkList) {
-                byte[] chunkContent = getChunkContent(chunk.getId());
-                if (chunkContent == null) throw new NoChunkError(chunk.getId());
-                partialFile.write(chunkContent);
+            //checking in case chunklist is null
+            if(chunkList!=null) {
+                for (ChunkData chunk : chunkList) {
+                    byte[] chunkContent = getChunkContent(chunk.getId());
+                    if (chunkContent == null) throw new NoChunkError(chunk.getId());
+                    partialFile.write(chunkContent);
+                }
             }
             partialFile.close();
             partialFile = null;
@@ -162,13 +156,14 @@ public class ServerFile extends NamedObject {
      */
     public InputStream getDownloadStream() {
         // Get list of chunks from server
-        final List<ChunkData> chunkList = getChunks();
+        final List<ChunkData> chunkList = getApi().getChunks(getModel().getWorkspace().getId(),
+                getModel().getId(), getId()).getItem();
         return new SequenceInputStream(new Enumeration<InputStream>() {
             int index = 0;
 
             @Override
             public boolean hasMoreElements() {
-                int chunkListSize = chunkList == null ? 0 : chunkList.size();   // jbackes 9/12/2018 - null == 0
+                int chunkListSize = chunkList == null ? 0 : chunkList.size();
                 return index < chunkListSize;
             }
 
@@ -303,8 +298,26 @@ public class ServerFile extends NamedObject {
                     buffer = new byte[size];
                 }
                 sourceFile.readFully(buffer, 0, size);
-                totalReadSoFar += size;
-                getApi().uploadChunkCompressed(getWorkspace().getId(), getModel().getId(), getId(), chunk.getId(), buffer);
+                //reading the last index of the separator
+                int separatorLastIndex = lastIndexOf(buffer,data.getSeparator());
+                //determining the byte offset based on UTF-16LE encoding
+                int offset=data.getEncoding().equalsIgnoreCase("UTF-16LE")?2:1;
+                //calculating the size of byte array to load the bytes until the last index of separator
+                int finalSize = separatorLastIndex+offset;
+                //creating the buffer to load the byte array until last separator
+                byte[] finalBuffer = new byte[finalSize];
+                //copying the data from existing byte array to new byte array until last separator
+                System.arraycopy(buffer,0,finalBuffer,0,finalSize);
+                //calculating the total read size from the file
+                totalReadSoFar += finalSize;
+                //checking if there is another chunk to decide if to upload the newly created buffer or existing buffer.
+                //existing buffer will be uploaded in case of last chunk
+                if(chunkIterator.hasNext()) {
+                    getApi().uploadChunkCompressed(getWorkspace().getId(), getModel().getId(), getId(), chunk.getId(), finalBuffer);
+                }else{
+                    getApi().uploadChunkCompressed(getWorkspace().getId(), getModel().getId(), getId(), chunk.getId(), buffer);
+                }
+                sourceFile.seek(totalReadSoFar);
                 LOG.debug("Uploaded chunk: {} (size={}MB)", chunk.getId(), chunkSize / 1000000);
             }
         } finally {
@@ -315,8 +328,28 @@ public class ServerFile extends NamedObject {
                     LOG.warn("Warning: failed to close file {}: {}", source, ioException.getMessage());
                 }
             }
-            finalizeUploadStream();
         }
+    }
+
+    /**
+     * returns the last index of single byte separator from a byte array
+     * @param outerArray
+     * @param separator
+     * @return last index of a single byte separator
+     */
+    public int lastIndexOf(byte[] outerArray, String separator) {
+        byte[] smallerArray = separator.getBytes();
+        for(int i = outerArray.length - smallerArray.length; i > 0; --i) {
+            boolean found = true;
+            for(int j = 0; j < smallerArray.length; ++j) {
+                if (outerArray[i+j] != smallerArray[j]) {
+                    found = false;
+                    break;
+                }
+            }
+            if (found) return i;
+        }
+        return -1;
     }
 
     /**
@@ -448,6 +481,12 @@ public class ServerFile extends NamedObject {
                     buf.append(text);
                 }
                 output.write(buf.append('\n').toString().getBytes("UTF-8"));
+            }
+
+            @Override
+            public int writeDataRow(String exportId,int maxRetryCount,int retryTimeout,InputStream inputStream,int noOfChunks, String chunkId, int[] mapcols, int columnCount, String separator) throws AnaplanAPIException, IOException, SQLException {
+            //dummy value as the implementation is done in JdbcCellWriter
+                return 1;
             }
 
             @Override

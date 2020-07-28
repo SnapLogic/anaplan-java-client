@@ -89,12 +89,7 @@ public class Service implements Closeable {
         if (properties.getAuthServiceUri() == null) {
             properties.setAuthServiceUri(PRODUCTION_AUTH_API_ROOT);
         }
-
-        LOG.info("------------------------------------------------");
         LOG.info("Initializing Service...");
-        LOG.info(System.getProperty("java.class.path"));
-        LOG.info("------------------------------------------------");
-
         this.props = properties;
         this.authProvider = AuthenticatorFactory.getAuthenticator(properties);
         this.apiProvider = new AnaplanApiProvider(properties, authProvider);

@@ -63,21 +63,20 @@ public class TaskResultDetail {
         if (data.getOccurrences() != 0) {
             out.append(": ").append(Integer.toString(data.getOccurrences()));
         }
+
         if (getValues() != null && getValues().size() != 0) {     // jbackes 10/08/2018 - Add null check
-            out.append("\n");
-            getValues().forEach((k, v) -> {
-                try {
-                    if (k.equals("serverAlert") && v == null) {
-                        v = "Completed successfully!";
+                out.append("\n");
+                getValues().forEach((k, v) -> {
+                    try {
+                        if (("serverAlert".equals(k)) && v == null) {
+                            v = "Completed successfully!";
+                        }
+                        out.append(k).append(" - ").append(v).append("\n");
+                    } catch (IOException e) {
+                        throw new InvalidTaskResultDetail(e);
                     }
-                    out.append(k).append(" - ").append(v).append("\n");
-                } catch (IOException e) {
-                    throw new InvalidTaskResultDetail(e);
-                }
-            });
-        } else {
-            LOG.debug("TaskResultDetail:AppendTo out =" + out + ", getValues =" + getValues());
-        }
+                });
+            }
         return out;
     }
 
@@ -103,8 +102,6 @@ public class TaskResultDetail {
                     newValues.put(key, i.next());
             }
             values = Collections.unmodifiableMap(newValues);
-        } else {
-            LOG.debug("TaskResultDetail:getValues data.getValues() =" + data.getValues() + ", values =" + values);
         }
         return values;
     }
