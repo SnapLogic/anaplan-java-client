@@ -13,6 +13,10 @@ public class WorkspaceData {
     private String name;
     private Long sizeAllowance;
 
+    public WorkspaceData() {
+        this.id = "";
+    }
+
     public WorkspaceData(String id) {
         this.id = id;
     }
