@@ -168,8 +168,7 @@ public class ServerFile extends NamedObject {
      */
     public InputStream getDownloadStream() {
         // Get list of chunks from server
-        final List<ChunkData> chunkList = getApi().getChunks(getModel().getWorkspace().getId(),
-            getModel().getId(), getId()).getItem();
+        final List<ChunkData> chunkList = getChunks();
         return new SequenceInputStream(new Enumeration<InputStream>() {
             int index = 0;
 
