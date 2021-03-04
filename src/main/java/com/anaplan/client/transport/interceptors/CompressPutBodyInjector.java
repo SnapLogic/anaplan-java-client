@@ -33,20 +33,24 @@ public class CompressPutBodyInjector implements RequestInterceptor {
     }
 
     private byte[] compress(byte[] source) {
-        int head = ((int) source[0] & 0xff) | ((source[1] << 8) & 0xff00);
-        ByteArrayOutputStream sink = new ByteArrayOutputStream();
-        //check if matches standard gzip magic number
-        if (GZIPInputStream.GZIP_MAGIC != head) {
-            try {
-                GZIPOutputStream gzos = new GZIPOutputStream(sink);
-                gzos.write(source, 0, source.length);
-                gzos.close();
-                return sink.toByteArray();
-            } catch (IOException e) {
-                throw new BadFileChunkCompressionError(e);
+        if (source.length >= 2) {
+            int head = ((int) source[0] & 0xff) | ((source[1] << 8) & 0xff00);
+            ByteArrayOutputStream sink = new ByteArrayOutputStream();
+            //check if matches standard gzip magic number
+            if (GZIPInputStream.GZIP_MAGIC != head) {
+                try {
+                    GZIPOutputStream gzos = new GZIPOutputStream(sink);
+                    gzos.write(source, 0, source.length);
+                    gzos.close();
+                    return sink.toByteArray();
+                } catch (IOException e) {
+                    throw new BadFileChunkCompressionError(e);
+                }
+            } else {
+                return source;      // Already zipped, just return the source
             }
         } else {
-            return source;
+            return source;          // Empty file, just return it
         }
     }
 }
