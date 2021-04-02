@@ -21,6 +21,7 @@ import com.anaplan.client.dto.responses.ServerFileResponse;
 import com.anaplan.client.ex.AnaplanAPIException;
 import com.anaplan.client.ex.CreateImportDatasourceError;
 import com.anaplan.client.ex.NoChunkError;
+import com.anaplan.client.ex.ParseCSVError;
 import com.anaplan.client.logging.LogUtils;
 import com.opencsv.CSVParser;
 
@@ -274,8 +275,8 @@ public class ServerFile extends NamedObject {
             throw new FileNotFoundException("File \"" + source
                 + "\" cannot be read - check ownership and/or permissions");
         }
-        RandomAccessFile sourceFile = null;
-        try {
+
+        try (RandomAccessFile sourceFile = new RandomAccessFile(source, "r")) {
             long length = source.length();
             data.setChunkCount((int) ((length - 1) / chunkSize) + 1);
             ServerFileResponse response = getApi().upsertFileDataSource(getWorkspace().getId(), getModel().getId(), getId(), data);
@@ -297,7 +298,6 @@ public class ServerFile extends NamedObject {
             List<ChunkData> chunkList = chunks.getItem();
             Iterator<ChunkData> chunkIterator = chunkList.iterator();
             byte[] buffer = new byte[chunkSize];
-            sourceFile = new RandomAccessFile(source, "r");
             long totalReadSoFar = 0;
             while (chunkIterator.hasNext()) {
                 ChunkData chunk = chunkIterator.next();
@@ -311,6 +311,10 @@ public class ServerFile extends NamedObject {
                 sourceFile.readFully(buffer, 0, size);
                 //reading the last index of the separator
                 int separatorLastIndex = lastIndexOf(buffer, data.getSeparator());
+                // Throw an exception if we don't find a separator in the first chunk
+                if ((totalReadSoFar == 0) && (separatorLastIndex == -1)) {
+                    throw new ParseCSVError(source.getAbsolutePath());
+                }
                 //determining the byte offset based on UTF-16LE encoding
                 int offset = data.getEncoding().equalsIgnoreCase("UTF-16LE") ? 2 : 1;
                 //calculating the size of byte array to load the bytes until the last index of separator
@@ -330,14 +334,6 @@ public class ServerFile extends NamedObject {
                 }
                 sourceFile.seek(totalReadSoFar);
                 LOG.debug("Uploaded chunk: {} (size={}MB)", chunk.getId(), chunkSize / 1000000);
-            }
-        } finally {
-            if (sourceFile != null) {
-                try {
-                    sourceFile.close();
-                } catch (IOException ioException) {
-                    LOG.warn("Warning: failed to close file {}: {}", source, ioException.getMessage());
-                }
             }
         }
     }
