@@ -313,7 +313,7 @@ public class ServerFile extends NamedObject {
                 int separatorLastIndex = lastIndexOf(buffer, data.getSeparator());
                 // Throw an exception if we don't find a separator in the first chunk
                 if ((totalReadSoFar == 0) && (separatorLastIndex == -1)) {
-                    throw new ParseCSVError(source.getAbsolutePath());
+                    throw new ParseCSVError(source.getAbsolutePath(), data.getSeparator());
                 }
                 //determining the byte offset based on UTF-16LE encoding
                 int offset = data.getEncoding().equalsIgnoreCase("UTF-16LE") ? 2 : 1;
