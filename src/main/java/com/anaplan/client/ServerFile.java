@@ -311,10 +311,7 @@ public class ServerFile extends NamedObject {
                 sourceFile.readFully(buffer, 0, size);
                 //reading the last index of the separator
                 int separatorLastIndex = lastIndexOf(buffer, data.getSeparator());
-                // Throw an exception if we don't find a separator in the first chunk
-                if ((totalReadSoFar == 0) && (separatorLastIndex == -1)) {
-                    throw new ParseCSVError(source.getAbsolutePath(), data.getSeparator());
-                }
+                // Throw an exception if we don't find a separator in the first gichunk
                 //determining the byte offset based on UTF-16LE encoding
                 int offset = data.getEncoding().equalsIgnoreCase("UTF-16LE") ? 2 : 1;
                 //calculating the size of byte array to load the bytes until the last index of separator
@@ -325,6 +322,10 @@ public class ServerFile extends NamedObject {
                 System.arraycopy(buffer, 0, finalBuffer, 0, finalSize);
                 //calculating the total read size from the file
                 totalReadSoFar += finalSize;
+
+                if ((chunkIterator.hasNext() && finalBuffer.length == 0) || buffer.length == 0) {
+                    throw new ParseCSVError(source.getAbsolutePath(), data.getSeparator());
+                }
                 //checking if there is another chunk to decide if to upload the newly created buffer or existing buffer.
                 //existing buffer will be uploaded in case of last chunk
                 if (chunkIterator.hasNext()) {
