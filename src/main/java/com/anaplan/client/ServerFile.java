@@ -323,7 +323,7 @@ public class ServerFile extends NamedObject {
                 //calculating the total read size from the file
                 totalReadSoFar += finalSize;
 
-                // finalBuffer or buffer size can be 0 when we don' find valid
+                // finalBuffer or buffer size can be 0 when we don't find a valid
                 // separator in the stream. That's why throwing error.
                 if ((chunkIterator.hasNext() && finalBuffer.length == 0) || buffer.length == 0) {
                     throw new ParseCSVError(source.getAbsolutePath(), data.getSeparator());
